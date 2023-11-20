@@ -1,1 +1,1 @@
-print("\x1b[32mhello world")
+print("\x1b[34mhello world")
