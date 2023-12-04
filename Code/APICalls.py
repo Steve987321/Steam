@@ -12,7 +12,7 @@ class SteamAPI:
         Geeft informatie van de speler/profiel door de gegeven SteamID.
 
         Args:
-            id: Steam ID van de speler of spelers waar informatie van wordt opgehaald.
+            steam_ids: Steam ID's van de speler of spelers waar informatie van wordt opgehaald.
         Returns:
             ....
         """
