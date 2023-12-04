@@ -12,10 +12,11 @@ class SteamAPI:
         Geeft informatie van de speler/profiel door de gegeven SteamID.
 
         Args:
-            id: Steam ID van de speler waar informatie van wordt opgehaald.
+            id: Steam ID van de speler of spelers waar informatie van wordt opgehaald.
         Returns:
             ....
         """
         request = f"https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={SteamAPI.KEY}&steamids={id}"
         response = requests.get(request)
-        return json.loads(response.text)
+        return json.loads(response.text)["response"]
+
