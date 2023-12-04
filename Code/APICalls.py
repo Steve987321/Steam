@@ -7,7 +7,7 @@ class SteamAPI:
     # TODO: Ergens anders opslaan?
     KEY = "0CF13F9FBA5C093B11239F396170BD4D"
 
-    def GetPlayersSummaries(steam_ids: str | list[str]):
+    def get_players_summaries(steam_ids: str | list[str]):
         """
         Geeft informatie van de speler/profiel door de gegeven SteamID.
 
@@ -27,7 +27,7 @@ class SteamAPI:
             a= steam_naam
         return a
 
-    def GetPleayerID(self: str | list[str]):
+    def get_player_ID(self: str | list[str]):
         request = f"https://api.steampowered.com/ISteamUser/GetFriendList/v1/?key={SteamAPI.KEY}&steamid=76561198123041058&format=json"
         response = requests.get(request)
         # print(response)

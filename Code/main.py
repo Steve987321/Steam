@@ -8,9 +8,15 @@ def test_scherm():
 
 def test_steam_api():
     # voeg testen toe
-    a = SteamAPI.GetPlayersSummaries("76561198123041058")
+    for i in SteamAPI.GetPleayerID('76561198123041058'):
+        a = SteamAPI.GetPlayersSummaries(i)
+        print(a)
+
+def test_steamnaam():
+    a = SteamAPI.GetPleayerID('76561198123041058')
     print(a)
 
-
 if __name__ == "__main__":
-    test_scherm()
+    #test_scherm()
+    #test_steamnaam()
+    test_steam_api()
