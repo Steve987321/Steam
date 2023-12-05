@@ -2,11 +2,13 @@ import requests
 import json
 
 
-# TODO: Ergens anders opslaan?
-KEY = "0CF13F9FBA5C093B11239F396170BD4D"
-
-
-# def get_steam_summary(steam_id: str | list[str]):
+try:
+    with open("Code/STEAM_API_KEY.txt") as key:
+        KEY = key.readline()
+        if KEY == "":
+            print("Er is geen API key gevonden in STEAM_API_KEY.txt")
+except FileNotFoundError:
+    print("Er is geen STEAM_API_KEY.txt gevonden")
 
 
 def get_steamid_name(steam_ids: str | list[str]):
