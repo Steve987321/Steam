@@ -1,4 +1,4 @@
-from APICalls import SteamAPI
+import SteamAPI
 from GUI import Window
 
 
