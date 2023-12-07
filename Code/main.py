@@ -8,7 +8,7 @@ with open('steamid.txt', 'r+') as file:
         file.write(steam_id)
     else:
         steam_id = check[0].strip()
-        print(steam_id)
+        #print(steam_id)
 
 
 def test_scherm():
@@ -27,17 +27,20 @@ def test_steam_api():
 
     print("online friends:", online_friends)
     friends_names = SteamAPI.get_steamid_name(friends)
-    # print(friends_names)
+    #print(friends_names)
 
     a = SteamAPI.get_player_game(online_friends)
     print(a)
-
+    a = SteamAPI.check_playerfriends_ingame(online_friends,steam_id)
+    print(a)
 def test_steamnaam():
     a = SteamAPI.get_steamid_name(steam_id)
     print(a)
     a = SteamAPI.get_player_summary(steam_id)
     print(a)
     a = SteamAPI.get_player_game(SteamAPI.get_player_friendsid(steam_id))
+    print(a)
+    a = SteamAPI.check_playerfriends_ingame(SteamAPI.get_player_friendsid(steam_id))
     print(a)
 
 

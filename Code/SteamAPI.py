@@ -108,3 +108,32 @@ def get_player_states(steam_ids: str | list[str]):
             statusses[id] = PlayerStatus(state_int)
 
     return statusses
+
+
+def check_playerfriends_ingame(steam_ids, steam_id: str | list[str]):
+    infofriends = get_player_summary(steam_ids)
+    infohost = get_player_summary(steam_id)
+    host = infohost['response']['players']
+    players = infofriends['response']['players']
+    games = []
+
+    for h in host:
+        hostname = h["personaname"]
+        try:
+            hostgame = h["gameextrainfo"]
+        except KeyError:
+            return
+
+        for p in players:
+            playername = p["personaname"]
+            try:
+                friendsgames = p["gameextrainfo"]
+            except KeyError:
+                return
+
+            if hostgame == friendsgames:
+                games.append((hostname, playername))
+
+    return games
+
+
