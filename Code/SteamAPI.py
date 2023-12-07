@@ -65,14 +65,18 @@ def get_player_summary(steam_ids: str | list[str]):
         id_data_json = response.json()
         return id_data_json
 
-def get_player_game(steam_id):
-    info = get_player_summary(steam_id)
-    id_data = info['response']['players']
-    # gamenames = [gamename['gameextrainfo'] for gamename in id_data]
-    gamenames = id_data["gameextrainfo"]
-    return gamenames
 
-# Example usage
+def get_player_game(steam_ids: str | list[str]):
+    info = get_player_summary(steam_ids)
+    players = info['response']['players']
 
+    games = {}
+    for p in players:
+        playername = p["personaname"]
 
+        try:
+            games[playername] = p["gameextrainfo"]
+        except KeyError:
+            games[playername] = None
 
+    return games
