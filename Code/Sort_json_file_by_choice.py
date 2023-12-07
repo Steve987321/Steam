@@ -1,6 +1,22 @@
 import json
 
 
+def bubble_sort(lst, key, descending=False):
+    length_of_unsorted_list = len(lst) - 1
+    while length_of_unsorted_list > 0:
+        for i in range(length_of_unsorted_list):
+            if lst[i][key] > lst[i + 1][key]:  # if the current element is larger than the next element, then swap them
+                temp = lst[i + 1][key]
+                lst[i + 1][key] = lst[i][key]
+                lst[i][key] = temp
+        length_of_unsorted_list -= 1
+
+    if descending:
+        return list(reversed(lst))
+
+    return lst
+
+
 def filter_list_all_keys():
     with open("test.json") as file_read:
         rjson = file_read.read()
@@ -62,7 +78,7 @@ def filter_list():
                     rev = False
 
         print(f"\x1b[31m{loaded_json}")
-        sorted_list = sorted(loaded_json, key=lambda x: x[input_key], reverse=rev)  # lambda function gets the values of dict
+        sorted_list = bubble_sort(loaded_json, input_key, rev)
         print(f"\x1b[32m{sorted_list}")
 
 
