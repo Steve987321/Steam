@@ -3,7 +3,7 @@ import json
 
 
 try:
-    with open("Code/STEAM_API_KEY.txt") as key:
+    with open("STEAM_API_KEY.txt") as key:
         KEY = key.readline()
         if KEY == "":
             print("Er is geen API key gevonden in STEAM_API_KEY.txt")
@@ -29,11 +29,14 @@ def get_steamid_name(steam_ids: str | list[str]):
     response = requests.get(request)
     if response.ok:
         id_data_json = response.json()
+        #print(id_data_json)
         id_data = id_data_json['response']['players']
-        return [name["personaname"] for name in id_data]
+        filtered_data = [name["personaname"] for status, name in zip(id_data, id_data) if status["personastate"] == 1]
+        return filtered_data
+
 
     # TODO: geef een foutmelding
-    print(response)
+    #print(response)
     return ""
 
 
@@ -51,5 +54,5 @@ def get_player_friendsid(steam_id: str):
     return steam_ids
 
 
-def get_player_gameid():
+#def get_player_gameid():
 
