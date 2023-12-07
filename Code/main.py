@@ -23,7 +23,7 @@ def test_steamnaam():
     print(a)
     a = SteamAPI.get_player_summary('76561198123041058')
     print(a)
-    a = SteamAPI.get_player_game('76561198123041058')
+    a = SteamAPI.get_player_game(SteamAPI.get_player_friendsid('76561198123041058'))
     print(a)
 
 
