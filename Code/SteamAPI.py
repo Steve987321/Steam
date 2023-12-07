@@ -40,7 +40,7 @@ def get_steamid_name(steam_ids: str | list[str]):
     response = requests.get(request)
     if response.ok:
         id_data_json = response.json()
-        print(id_data_json)
+        #print(id_data_json)
         id_data = id_data_json['response']['players']
         filtered_data = [name["personaname"] for status, name in zip(id_data, id_data) if status["personastate"] == 1]
         return filtered_data
