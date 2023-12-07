@@ -39,9 +39,6 @@ def get_steamid_name(steam_ids: str | list[str]):
     return ""
 
 
-
-
-
 def get_player_friendsid(steam_id: str):
     request = f"https://api.steampowered.com/ISteamUser/GetFriendList/v1/?key={KEY}&steamid={steam_id}&format=json"
     response = requests.get(request)
@@ -56,16 +53,26 @@ def get_player_friendsid(steam_id: str):
     return steam_ids
 
 
-def get_player_game(steam_id: str):
-    """return string of game that the given steam id is playing"""
-    # check steam id online status
-    info = get_player_summary(steam_id)[0]
-    if len(info) == 0:
-        return ""
+def get_player_summary(steam_ids: str | list[str]):
+    if isinstance(steam_ids, list):
+        ids = ','.join(map(str, steam_ids))
+    else:
+        ids = steam_ids
 
-    try:
-        game = info["gameextrainfo"]
-    except KeyError as e:
-        return ""
+    request = f"https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={KEY}&steamids={ids}"
+    response = requests.get(request)
+    if response.ok:
+        id_data_json = response.json()
+        return id_data_json
 
-    return game
+def get_player_game(steam_id):
+    info = get_player_summary(steam_id)
+    id_data = info['response']['players']
+    # gamenames = [gamename['gameextrainfo'] for gamename in id_data]
+    gamenames = id_data["gameextrainfo"]
+    return gamenames
+
+# Example usage
+
+
+

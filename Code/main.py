@@ -16,10 +16,14 @@ def test_steam_api():
 
 def test_steamnaam():
     a = SteamAPI.get_steamid_name(['76561198123041058', "76561198181797231"])
-    print(a)
+    #print(a)
     a = SteamAPI.get_steamid_name(['76561198123041058'])
-    print(a)
+    #print(a)
     a = SteamAPI.get_steamid_name('76561198123041058')
+    print(a)
+    a = SteamAPI.get_player_summary('76561198123041058')
+    print(a)
+    a = SteamAPI.get_player_game('76561198123041058')
     print(a)
 
 
