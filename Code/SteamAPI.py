@@ -34,10 +34,12 @@ def get_steamid_name(steam_ids: str | list[str]):
         filtered_data = [name["personaname"] for status, name in zip(id_data, id_data) if status["personastate"] == 1]
         return filtered_data
 
-
     # TODO: geef een foutmelding
-    #print(response)
+    # print(response)
     return ""
+
+
+
 
 
 def get_player_friendsid(steam_id: str):
@@ -54,5 +56,16 @@ def get_player_friendsid(steam_id: str):
     return steam_ids
 
 
-#def get_player_gameid():
+def get_player_game(steam_id: str):
+    """return string of game that the given steam id is playing"""
+    # check steam id online status
+    info = get_player_summary(steam_id)[0]
+    if len(info) == 0:
+        return ""
 
+    try:
+        game = info["gameextrainfo"]
+    except KeyError as e:
+        return ""
+
+    return game
