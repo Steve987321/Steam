@@ -11,7 +11,7 @@ except FileNotFoundError:
     print("Er is geen STEAM_API_KEY.txt gevonden")
 
 
-def get_steamid_name(steam_ids: str | list[str]):
+def get_player_summary(steam_ids: str | list[str]):
     """Geeft informatie van de speler/profiel door de gegeven SteamID of ID's.
 
     Args:
@@ -30,11 +30,19 @@ def get_steamid_name(steam_ids: str | list[str]):
     if response.ok:
         id_data_json = response.json()
         id_data = id_data_json['response']['players']
-        return [name["personaname"] for name in id_data]
+        return id_data
 
-    # TODO: geef een foutmelding
-    print(response)
-    return ""
+    return []
+
+
+def get_steamid_name(steam_ids: str | list[str]):
+    summaries = get_player_summary(steam_ids)
+
+    # TODO: error handling
+    if len(summaries) == 0:
+        return "Error"
+
+    return [name["personaname"] for name in summaries]
 
 
 def get_player_friendsid(steam_id: str):
@@ -51,5 +59,16 @@ def get_player_friendsid(steam_id: str):
     return steam_ids
 
 
-def get_player_gameid():
+def get_player_game(steam_id: str):
+    """return string of game that the given steam id is playing"""
+    # check steam id online status
+    info = get_player_summary(steam_id)[0]
+    if len(info) == 0:
+        return ""
 
+    try:
+        game = info["gameextrainfo"]
+    except KeyError as e:
+        return ""
+
+    return game
