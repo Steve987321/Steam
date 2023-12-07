@@ -1,6 +1,17 @@
 import requests
 import json
+from enum import IntEnum
 
+
+class PlayerStatus(IntEnum):
+    INVALID = -1            # Iets is foutegegaan
+    OFFLINE = 0,            # speler is offline of heeft zijn profiel op private gezet
+    ONLINE = 1,             # speler is online
+    BUSY = 2,               # speler is busy
+    AWAY = 3,               # speler is afk en away
+    SNOOZE = 4,             # speler is afk
+    LOOKING_TO_TRADE = 5,   # speler wilt traden
+    LOOKING_TO_PLAY = 6     # speler wilt spelen
 
 try:
     with open("STEAM_API_KEY.txt") as key:
@@ -65,24 +76,35 @@ def get_player_summary(steam_ids: str | list[str]):
         id_data_json = response.json()
         return id_data_json
 
-# def get_player_game(steam_id):
-#     info = get_player_summary(steam_id)
-#     id_data = info['response']['players']
-#     # gamenames = [gamename['gameextrainfo'] for gamename in id_data]
-#     gamenames = id_data["gameextrainfo"]
-#     return gamenames
 
 def get_player_game(steam_ids: str | list[str]):
     info = get_player_summary(steam_ids)
     players = info['response']['players']
-
     games = {}
     for p in players:
         playername = p["personaname"]
-
         try:
             games[playername] = p["gameextrainfo"]
         except KeyError:
             games[playername] = None
 
     return games
+
+
+def get_player_states(steam_ids: str | list[str]):
+    players = get_player_summary(steam_ids)["response"]["players"]
+
+    statusses = {}
+
+    for p in players:
+        try:
+            state_int = int(p["personastate"])
+            id = p["steamid"]
+        except ValueError:
+            statusses[id] = PlayerStatus.INVALID
+        except KeyError:
+            statusses[id] = PlayerStatus.INVALID
+        else:
+            statusses[id] = PlayerStatus(state_int)
+
+    return statusses
