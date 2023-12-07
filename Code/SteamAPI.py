@@ -29,7 +29,7 @@ def get_steamid_name(steam_ids: str | list[str]):
     response = requests.get(request)
     if response.ok:
         id_data_json = response.json()
-        print(id_data_json)
+        #print(id_data_json)
         id_data = id_data_json['response']['players']
         filtered_data = [name["personaname"] for status, name in zip(id_data, id_data) if status["personastate"] == 1]
         return filtered_data
@@ -65,12 +65,7 @@ def get_player_summary(steam_ids: str | list[str]):
         id_data_json = response.json()
         return id_data_json
 
-# def get_player_game(steam_id):
-#     info = get_player_summary(steam_id)
-#     id_data = info['response']['players']
-#     # gamenames = [gamename['gameextrainfo'] for gamename in id_data]
-#     gamenames = id_data["gameextrainfo"]
-#     return gamenames
+
 
 def get_player_game(steam_ids: str | list[str]):
     info = get_player_summary(steam_ids)
