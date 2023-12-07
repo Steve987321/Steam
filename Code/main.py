@@ -19,9 +19,18 @@ def test_scherm():
 def test_steam_api():
     # voeg testen toe
     friends = SteamAPI.get_player_friendsid(steam_id)
-    friends_names = SteamAPI.get_steamid_name(friends)
-    print(friends_names)
+    friends_statusses = SteamAPI.get_player_states(friends)
+    online_friends = []
+    for sid, status in friends_statusses.items():
+        if status == SteamAPI.PlayerStatus.ONLINE:
+            online_friends.append(sid)
 
+    print("online friends:", online_friends)
+    friends_names = SteamAPI.get_steamid_name(friends)
+    # print(friends_names)
+
+    a = SteamAPI.get_player_game(online_friends)
+    print(a)
 
 def test_steamnaam():
     a = SteamAPI.get_steamid_name(steam_id)
@@ -34,5 +43,5 @@ def test_steamnaam():
 
 if __name__ == "__main__":
     # test_scherm()
-    test_steamnaam()
+    # test_steamnaam()
     test_steam_api()

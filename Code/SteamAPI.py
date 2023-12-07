@@ -42,7 +42,7 @@ def get_steamid_name(steam_ids: str | list[str]):
         id_data_json = response.json()
         #print(id_data_json)
         id_data = id_data_json['response']['players']
-        filtered_data = [name["personaname"] for status, name in zip(id_data, id_data) if status["personastate"] == 1]
+        filtered_data = [name["personaname"] for name in id_data]
         return filtered_data
 
     # TODO: geef een foutmelding
