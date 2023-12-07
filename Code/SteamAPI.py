@@ -37,8 +37,8 @@ def get_steamid_name(steam_ids: str | list[str]):
     return ""
 
 
-def get_player_friendsid(self: str | list[str]):
-    request = f"https://api.steampowered.com/ISteamUser/GetFriendList/v1/?key={KEY}&steamid=76561198123041058&format=json"
+def get_player_friendsid(steam_id: str):
+    request = f"https://api.steampowered.com/ISteamUser/GetFriendList/v1/?key={KEY}&steamid={steam_id}&format=json"
     response = requests.get(request)
     data = response.text
     data2 = json.loads(data)
@@ -49,3 +49,7 @@ def get_player_friendsid(self: str | list[str]):
     steam_ids = [friend['steamid'] for friend in friends]
 
     return steam_ids
+
+
+def get_player_gameid():
+
