@@ -1,5 +1,6 @@
 import requests
 import json
+import time
 from enum import IntEnum
 
 
@@ -76,7 +77,6 @@ def get_player_summary(steam_ids: str | list[str]):
         id_data_json = response.json()
         return id_data_json
 
-
 def get_player_game(steam_ids: str | list[str]):
     info = get_player_summary(steam_ids)
     players = info['response']['players']
@@ -89,6 +89,7 @@ def get_player_game(steam_ids: str | list[str]):
             games[playername] = None
 
     return games
+
 
 
 def get_player_states(steam_ids: str | list[str]):
@@ -111,10 +112,40 @@ def get_player_states(steam_ids: str | list[str]):
 
 
 def check_playerfriends_ingame(steam_ids, steam_id: str | list[str]):
+    # infofriends = get_player_summary(steam_ids)
+    # infohost = get_player_summary(steam_id)
+    # print(infohost)
+    # host = infohost['response']['players']
+    # print(host)
+    # players = infofriends['response']['players']
+    # print(players)
+    # games = []
+    #
+    # for h in host:
+    #     hostname = h["personaname"]
+    #     try:
+    #         hostgame = h["gameextrainfo"]
+    #     except KeyError:
+    #         return
+    #
+    #     for p in players:
+    #         playername = p["personaname"]
+    #         try:
+    #             friendsgames = p["gameextrainfo"]
+    #         except KeyError:
+    #             return
+    #
+    #         if hostgame == friendsgames:
+    #             games.append((hostname, playername))
+    # print(games)
+    # return games
     infofriends = get_player_summary(steam_ids)
     infohost = get_player_summary(steam_id)
+
     host = infohost['response']['players']
+
     players = infofriends['response']['players']
+
     games = []
 
     for h in host:
@@ -122,14 +153,14 @@ def check_playerfriends_ingame(steam_ids, steam_id: str | list[str]):
         try:
             hostgame = h["gameextrainfo"]
         except KeyError:
-            return
+            continue  # Skip to the next iteration if "gameextrainfo" is not present for the host
 
         for p in players:
             playername = p["personaname"]
             try:
                 friendsgames = p["gameextrainfo"]
             except KeyError:
-                return
+                continue  # Skip to the next iteration if "gameextrainfo" is not present for a friend
 
             if hostgame == friendsgames:
                 games.append((hostname, playername))
