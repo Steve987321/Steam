@@ -2,16 +2,26 @@ import customtkinter as ctk
 import SteamAPI
 
 
-class SubWindow:
+class StatistiekWindow():
     def __init__(self, window_name: str = "SubWindow", window_size: str = "500x600"):
         self.root = ctk.CTkToplevel()
         self.root.title(window_name)
         self.root.resizable(False, False)
         self.root.geometry(window_size)
 
+        self.steam_api_test()
+
+
     def is_open(self):
         """Geeft aan of scherm bestaat"""
         return self.root.winfo_exists()
+
+    def get_window(self):
+        return self.root
+
+    def steam_api_test(self):
+        SteamAPI.test_steam_api()
+        self.root.after(10000, self.steam_api_test)
 
 
 class Window:
@@ -35,7 +45,7 @@ class Window:
             if self.statistiek_window.is_open():
                 return
 
-        self.statistiek_window = SubWindow("Statistiek")
+        self.statistiek_window = StatistiekWindow("Statistiek")
 
     def button_click(self):
         # SteamAPI.test_steam_api()
@@ -43,5 +53,3 @@ class Window:
 
     def show(self):
         self.root.mainloop()
-
-
