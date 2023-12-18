@@ -2,6 +2,7 @@ from lcd1602 import LCD
 from machine import *
 import time
 import neopixel
+# Hell yeah
 
 
 def steam_uitlezer(steam_vriend_info, blink_notificatie, lijst):
