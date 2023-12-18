@@ -2,16 +2,6 @@ import SteamAPI
 import time
 from GUI import Window
 
-with open('steamid.txt', 'r+') as file:
-    check = file.readlines()
-    if not check:
-        steam_id = input('What is your steamID? ')
-        file.write(steam_id)
-    else:
-        steam_id = check[0].strip()
-        #print(steam_id)
-
-
 # with open('steamapikey.txt', 'r+') as file:
 #     check = file.readlines()
 #     if not check:
@@ -28,12 +18,6 @@ def test_scherm():
     scherm.show()
 
 import time
-
-# Initialize previous information
-previous_online_friends = set()
-previous_friends_names = set()
-previous_game_info = {}
-previous_ingame_info = {}
 
 
 class ApiLoop:
@@ -71,6 +55,9 @@ class ApiLoop:
                 previous_ingame_info = ingame_info
 
             time.sleep(10)
+
+
+test_scherm()
 
 # if __name__ == "__main__":
 #     #test_steamnaam()

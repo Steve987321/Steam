@@ -1,7 +1,5 @@
 import customtkinter as ctk
-from main import ApiLoop
-
-
+import SteamAPI
 
 
 class Window:
@@ -19,8 +17,7 @@ class Window:
         button.pack()
 
     def button_click(self):
-        api_loop_instance = ApiLoop()
-        api_loop_instance.test_steam_api()
+        SteamAPI.test_steam_api()
 
     def show(self):
         self.root.mainloop()
