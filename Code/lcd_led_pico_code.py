@@ -123,14 +123,16 @@ def pico_main(steam_vriend_online, steam_vriend_offline, steam_vriend_spel):
 
                 if len(spel_list) > 0:
                     while len(spel_list) > 0:
-                        regel_1 = "Naam speelt"
-                        regel_2 = "Spel"
+                        naam, spel = spel_list[0].split(";")[0], spel_list[0].split(";")[1]
+                        regel_1 = f"{naam} speelt:"
+                        regel_2 = f"{spel}"
                         lcd_writer(regel_1, regel_2, spel_list, lcd)
+                        spel_list.pop(0)
             time.sleep(0.5)
 
 
-test_steam_vriend_online = ["Damian"]
-test_steam_vriend_offline = ["Duncan"]
-test_steam_vriend_spel = ["THE FINALS"]
+#test_steam_vriend_online = ["Damian"]
+#test_steam_vriend_offline = ["Duncan"]
+#test_steam_vriend_spel = ["Damian;THE FINALS"]
 
 pico_main(test_steam_vriend_online, test_steam_vriend_offline, test_steam_vriend_spel)
