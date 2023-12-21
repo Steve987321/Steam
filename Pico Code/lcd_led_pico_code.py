@@ -127,7 +127,8 @@ def pico_main(steam_vriend_online, steam_vriend_offline, steam_vriend_spel):
                         regel_1 = f"{naam} speelt:"
                         regel_2 = f"{spel}"
                         lcd_writer(regel_1, regel_2, spel_list, lcd)
-                        spel_list.pop(0)
+                        if len(spel_list) > 0:
+                            spel_list.pop(0)
             time.sleep(0.5)
 
 
