@@ -1,6 +1,7 @@
 import SteamAPI
 import time
 from GUI import Window
+from lcd_led_pico_code import pico_main
 
 with open('steamid.txt', 'r+') as file:
     check = file.readlines()
@@ -10,6 +11,9 @@ with open('steamid.txt', 'r+') as file:
     else:
         steam_id = check[0].strip()
         #print(steam_id)
+
+
+
 
 # with open('steamapikey.txt', 'r+') as file:
 #     check = file.readlines()
@@ -61,6 +65,12 @@ class ApiLoop:
                 previous_friends_names = set(friends)
                 previous_game_info = game_info
                 previous_ingame_info = ingame_info
+                print(online_friends)
+
+                test_steam_vriend_online = ["Damian"]
+                test_steam_vriend_offline = ["Duncan"]
+                test_steam_vriend_spel = ["Damian;THE FINALS"]
+                pico_main(test_steam_vriend_online, test_steam_vriend_offline, test_steam_vriend_spel)
 
             time.sleep(10)
 
