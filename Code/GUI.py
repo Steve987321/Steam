@@ -3,7 +3,7 @@ import SteamAPI
 
 
 class StatistiekWindow():
-    def __init__(self, window_name: str = "SubWindow", window_size: str = "500x600"):
+    def __init__(self, window_name: str = "SubWindow", window_size: str = "1080x1440"):
         self.root = ctk.CTkToplevel()
         self.root.title(window_name)
         self.root.resizable(False, False)
@@ -48,7 +48,7 @@ class Window:
         self.statistiek_window = StatistiekWindow("Statistiek")
 
     def button_click(self):
-        # SteamAPI.test_steam_api()
+        SteamAPI.test_steam_api()
         self.toon_statistiek_window()
 
     def show(self):

@@ -20,7 +20,7 @@ def bubble_sort(lst, key, descending=False):
 
 
 def filter_list():
-    with open("test.json") as file_read:
+    with open("steam.json") as file_read:
         rjson = file_read.read()
         loaded_json = json.loads(rjson)
 

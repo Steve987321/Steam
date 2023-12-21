@@ -2,6 +2,15 @@ import SteamAPI
 import time
 from GUI import Window
 
+with open('steamid.txt', 'r+') as file:
+    check = file.readlines()
+    if not check:
+        steam_id = input('What is your steamID? ')
+        file.write(steam_id)
+    else:
+        steam_id = check[0].strip()
+        #print(steam_id)
+
 # with open('steamapikey.txt', 'r+') as file:
 #     check = file.readlines()
 #     if not check:
@@ -17,14 +26,13 @@ def test_scherm():
     scherm = Window("Steam Train Groep", 500, 500)
     scherm.show()
 
-import time
-
-
 class ApiLoop:
 
     def test_steam_api(self):
         while True:
             friends = SteamAPI.get_player_friendsid(steam_id)
+            #if friends is empty:
+            # continue
             friends_statusses = SteamAPI.get_player_states(friends)
             online_friends = [sid for sid, status in friends_statusses.items() if
                               status == SteamAPI.PlayerStatus.ONLINE]
