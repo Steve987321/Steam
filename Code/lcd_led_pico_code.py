@@ -43,7 +43,27 @@ def lcd_writer(regel_1, regel_2, steam_info_lijst, lcd):
     steam_info_lijst.pop(0)  # Verwijdert de getoonde informatie zodat er een while-loop gebruikt kan worden
 
 
-def main(steam_vriend_online, steam_vriend_offline, steam_vriend_spel):
+def pico_main(steam_vriend_online, steam_vriend_offline, steam_vriend_spel):
+    """
+    Deze code heeft als input, 3 lists, en gebruikt voor het TI-gedeelte een LCD-scherm en een Pico. Het gebruikt de 8
+    lampjes op het LEDje om nieuwe binnenkomende informatie te tonen.
+    Het linker lampje wordt hierbij gebruikt om te laten zien of er nieuwe informatie opgehaald is. Het lampje blijft
+    groen branden totdat er nieuwe informatie binnen is en brand dan geel.
+    De rechter 7 lampjes worden alleen gebruikt wanneer er iemand online komt (blinken 3 keer groen), iemand offline
+    gaat (blinken 3 keer rood) of als iemand een spel begint te spelen (blinken 3 keer blauw).
+    Zodra er op de button wordt geklikt als er geen blinks bezig zijn, dan wordt een voor een op volgorde van oudste
+    op het lcd-scherm de berichten laten zien.
+
+    :param 1 - steam_vriend_online:
+        List met *ALLEEN* namen van mensen die online zijn
+    :param 2 - steam_vriend_offline:
+        List met *ALLEEN* namen van mensen die offline zijn gegaan sinds ze online waren
+    :param 3 - steam_vriend_spel:
+        List met *ALLEEN* de naam van de persoon en het spel dat deze persoon is gaan spelen
+    :return:
+        Return in principe niks, behalve output uit de pico
+    """
+
     np = neopixel.NeoPixel(machine.Pin(13), 8)  # Pin waar de Neopixel LED mee verbonden is
     lcd = LCD()
     switch_pin = Pin(19, Pin.IN, pull=Pin.PULL_DOWN)  # Pin waar de knop mee verbonden is
@@ -113,4 +133,4 @@ test_steam_vriend_online = ["Damian"]
 test_steam_vriend_offline = ["Duncan"]
 test_steam_vriend_spel = ["THE FINALS"]
 
-main(test_steam_vriend_online, test_steam_vriend_offline, test_steam_vriend_spel)
+pico_main(test_steam_vriend_online, test_steam_vriend_offline, test_steam_vriend_spel)
