@@ -14,6 +14,10 @@ class PlayerStatus(IntEnum):
     LOOKING_TO_TRADE = 5,  # speler wilt traden
     LOOKING_TO_PLAY = 6  # speler wilt spelen
 
+class AvatarFormaat(IntEnum):
+    KLEIN = 0,      # 32x32
+    MIDDEL = 1,     # 64x64
+    GROOT = 2       # 184x184
 
 try:
     with open("STEAM_API_KEY.txt") as key:
@@ -115,8 +119,34 @@ class Player:
 
         pass
 
+    def get_avatar(self, formaat: AvatarFormaat) -> str:
+        """Geeft url van avatar"""
+        try:
+            match formaat:
+                case AvatarFormaat.KLEIN:
+                    return self.data["avatar"]
+                case AvatarFormaat.MIDDEL:
+                    return self.data["avatarmedium"]
+                case AvatarFormaat.GROOT:
+                    return self.data["avatarfull"]
+                case _:
+                    opties = []
+                    for f in AvatarFormaat:
+                        opties.append(f.value)
+                    print("[Player] geen geldige avatar formaat, kies uit: ", opties)
+                    return ""
+
+        except KeyError as e:
+            print(f"[Player] avatar kan niet worden gevonden: {e}")
+            return ""
+
     def get_playing_game(self) -> str:
-        """Return the name of the playing game"""
+        """Geeft naam van game die wordt gespeeld"""
+        try:
+            return self.data["gameextrainfo"]
+        except KeyError:
+            print("[Player] speler is niet in game")
+            return ""
         pass
 
 

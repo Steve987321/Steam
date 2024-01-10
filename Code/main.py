@@ -20,6 +20,7 @@ def test_steam_api():
     print("name:", player.get_name())
     print("status:", player.get_status().name)
     print("game:", player.get_playing_game())
+    print("avatar url:", player.get_avatar(SteamAPI.AvatarFormaat.KLEIN))
 
     pass
 
