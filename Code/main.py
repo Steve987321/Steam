@@ -1,7 +1,7 @@
 import SteamAPI
 import time
 from GUI import Window
-from lcd_led_pico_code import pico_main
+# from lcd_led_pico_code import pico_main
 
 with open('steamid.txt', 'r+') as file:
     check = file.readlines()
@@ -13,25 +13,21 @@ with open('steamid.txt', 'r+') as file:
         #print(steam_id)
 
 
+def test_steam_api():
+    player = SteamAPI.Player(SteamAPI.Api.get_player_summary(steam_id))
+    player_friends = player.get_friends()
+    print("friends:", player_friends)
+    print("name:", player.get_name())
+    print("status:", player.get_status().name)
+    print("game:", player.get_playing_game())
 
-
-# with open('steamapikey.txt', 'r+') as file:
-#     check = file.readlines()
-#     if not check:
-#         KEY = input('What is your steamKEY? ')
-#         file.write(KEY)
-#     else:
-#         KEY = check[0].strip()
-#        api key aan vragen voor onthoud
-
-
+    pass
 
 def test_scherm():
     scherm = Window("Steam Train Groep", 500, 500)
     scherm.show()
 
 class ApiLoop:
-
     def test_steam_api(self):
         while True:
             friends = SteamAPI.get_player_friendsid(steam_id)
@@ -70,14 +66,11 @@ class ApiLoop:
                 test_steam_vriend_online = ["Damian"]
                 test_steam_vriend_offline = ["Duncan"]
                 test_steam_vriend_spel = ["Damian;THE FINALS"]
-                pico_main(test_steam_vriend_online, test_steam_vriend_offline, test_steam_vriend_spel)
+                # pico_main(test_steam_vriend_online, test_steam_vriend_offline, test_steam_vriend_spel)
 
             time.sleep(10)
 
-
-test_scherm()
-
-# if __name__ == "__main__":
-#     #test_steamnaam()
-#     #test_steam_api()
-#     test_scherm()
+if __name__ == "__main__":
+    #test_steamnaam()
+    test_steam_api()
+    # test_scherm()
