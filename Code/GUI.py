@@ -3,6 +3,7 @@ import SteamAPI
 import requests
 from PIL import Image
 from io import BytesIO
+import sys
 
 from dataclasses import dataclass
 
@@ -10,13 +11,38 @@ COL_BG = "#16191C"
 COL_HOVER = "#202227"
 COL_BORDER = "#1D262F"
 COL_STATUS_ONLINE_GREEN = "#91C257"
-COL_STATUS_ONLINE_BLUE = "#6DCFF6"
+COL_STATUS_NAME_PLAYING = "#D6F1B8"
 COL_GAME_TITLE = "#C0D0CE"
 COL_GREY = "#434953"
+COL_GREY_WIDGET = "#868789"
 COL_LIGHT_BLUE = "#78CEF3"
+COL_DARK_BLUE = "#4989A3"
 
 
-class StatistiekWindow():
+def lerp(a, b, t):
+    return a + (b - a) * t
+
+
+def lerp_color(col1, col2, t):
+    # naar dec
+    r1 = int(col1[1:3], 16)
+    g1 = int(col1[3:5], 16)
+    b1 = int(col1[5:7], 16)
+
+    # lerp
+    r2 = int(col2[1:3], 16)
+    g2 = int(col2[3:5], 16)
+    b2 = int(col2[5:7], 16)
+
+    # naar hex
+    r = format(int(lerp(r1, r2, t)), "02x")
+    g = format(int(lerp(g1, g2, t)), "02x")
+    b = format(int(lerp(b1, b2, t)), "02x")
+
+    return f"#{r}{g}{b}"
+
+
+class StatistiekWindow:
     def __init__(self, window_name: str = "SubWindow", window_size: str = "1080x1440"):
         self.root = ctk.CTkToplevel()
         self.root.title(window_name)
@@ -54,30 +80,36 @@ class PlayerWidget:
 
         status = ""
         status_col = ""
+        status_name_col = ""
         if player.get_playing_game() != "":
             status = player.get_playing_game()
             status_col = COL_STATUS_ONLINE_GREEN
+            status_name_col = COL_STATUS_NAME_PLAYING
         else:
-            status = player.get_status().name
-            status_col = COL_LIGHT_BLUE
+            status = player.get_status().name.lower()
+            status = status.replace(status[0], status[0].upper(), 1)
+            status_col = COL_DARK_BLUE
+            status_name_col = COL_LIGHT_BLUE
 
-        self.frame = ctk.CTkFrame(master, width=1000, height=size[1]+20)
+        self.frame = ctk.CTkFrame(master, width=1000, height=size[1]+20, fg_color="transparent")
         self.frame.pack_propagate(False)
 
         self.button = ctk.CTkButton(self.frame, text="", width=size[0], height=size[1], image=image_widget, border_color=status_col,
                                     border_width=0, border_spacing=0, hover_color=COL_HOVER, fg_color="transparent", command=self.avatar_click)
         self.button.pack_propagate(False)
 
-        self.name_label = ctk.CTkLabel(self.frame, text=player.get_name(), font=("Arial", 16))
+        self.name_label = ctk.CTkLabel(self.frame, text=player.get_name(), text_color=status_name_col, font=("Arial", 15), height=0, anchor=ctk.W)
 
-        self.status_label = ctk.CTkLabel(self.frame, text=status, text_color=status_col, font=("Arial", 10))
+        self.status_label = ctk.CTkLabel(self.frame, text=status, text_color=status_col, font=("Arial", 12), height=0, anchor=ctk.W)
 
         self.name_label.pack_propagate(False)
         self.status_label.pack_propagate(False)
 
         self.button.pack(side=ctk.LEFT, anchor=ctk.W)
-        self.name_label.pack(side=ctk.TOP, anchor=ctk.NW, padx=5, pady=0)
-        self.status_label.pack(side=ctk.TOP, anchor=ctk.NW, padx=5, pady=0)
+        # spacing
+        ctk.CTkFrame(self.frame, height=8, fg_color="transparent").pack(side=ctk.TOP)
+        self.name_label.pack(side=ctk.TOP, anchor=ctk.W, padx=5, pady=0)
+        self.status_label.pack(side=ctk.TOP, anchor=ctk.W, padx=5, pady=0)
 
     def pack(self, **kwargs):
         self.frame.pack(**kwargs)
@@ -89,37 +121,92 @@ class PlayerWidget:
         pass
 
 
-class DropDownButton(ctk.CTkButton):
+class DropDownButton(ctk.CTkFrame):
 
     dropdowns = []
 
-    def __init__(self, master: any, title:str, widgets: list[PlayerWidget], **kwargs):
+    def __init__(self, master: any, title: str, widgets: list[PlayerWidget], **kwargs):
         self.master = master
         self.widgets = widgets
         self.collapsed = False
         self.separator = SeparatorLine(self.master, COL_BORDER)
-        self.title = title
+        self.collapse_widget_color = COL_BG
+        self.animation_steps = 0
         DropDownButton.dropdowns.append(self)
-        super().__init__(self.master, **kwargs, text=title, command=self.on_click)
+
+        super().__init__(self.master, **kwargs, fg_color="transparent")
+
+        self.title_widget = ctk.CTkLabel(self, text=title, anchor=ctk.W)
+        self.collapse_widget = ctk.CTkLabel(self, text='-', anchor=ctk.W, text_color=self.collapse_widget_color)
+        self.collapse_widget.pack(side=ctk.LEFT)
+        self.title_widget.pack(side=ctk.LEFT)
+
+        self.title_widget.bind("<Button-1>", self.on_click)
+        self.title_widget.bind("<Enter>", self.on_hover)
+        self.title_widget.bind("<Leave>", self.on_leave)
 
     @staticmethod
     def reset():
         for dp in DropDownButton.dropdowns:
-            print(dp.title)
             dp.pack_forget()
-            dp.pack(side=ctk.TOP, anchor=ctk.W)
+            dp.pack(side=ctk.TOP, anchor=ctk.W, pady=1, padx=2, expand=True, fill=ctk.X)
 
             if not dp.collapsed:
                 for widget in dp.widgets:
                     widget.pack_forget()
-                    widget.pack(side=ctk.TOP, anchor=ctk.W)
+                    widget.pack(side=ctk.TOP, anchor=ctk.W, pady=1)
 
             dp.separator.pack_forget()
             dp.separator.pack()
 
-    def on_click(self):
+    def on_hover(self, _):
+        # print("fade in start ")
+        self.animation_steps = 0
+        self.collapse_widget_color = COL_GREY_WIDGET
+        self.fade_in()
+
+    def on_leave(self, _):
+        self.animation_steps = 0
+        self.collapse_widget_color = COL_BG
+        self.fade_out()
+
+    def fade_in(self):
+        if self.collapse_widget_color != COL_GREY_WIDGET:
+            return
+
+        if self.animation_steps < 1 - sys.float_info.epsilon:
+            self.animation_steps += 0.01
+            # print("in", self.animation_steps)
+            col = lerp_color(self.collapse_widget.cget("text_color"), self.collapse_widget_color, self.animation_steps)
+            self.collapse_widget.configure(text_color=col)
+            self.collapse_widget.after(10, self.fade_in)
+        else:
+            # print("in", "done")
+            self.animation_steps = 1
+            self.collapse_widget.configure(text_color=self.collapse_widget_color)
+
+    def fade_out(self):
+        if self.collapse_widget_color != COL_BG:
+            return
+
+        if self.animation_steps < 1 - sys.float_info.epsilon:
+            self.animation_steps += 0.01
+            col = lerp_color(self.collapse_widget.cget("text_color"), self.collapse_widget_color, self.animation_steps)
+            self.collapse_widget.configure(text_color=col)
+            self.collapse_widget.after(10, self.fade_out)
+        else:
+            self.animation_steps = 1
+            self.collapse_widget.configure(text_color=self.collapse_widget_color)
+
+
+    def on_click(self, _):
         self.collapsed = not self.collapsed
 
+        if self.collapsed:
+            self.collapse_widget.configure(text="+")
+        else:
+            self.collapse_widget.configure(text="-")
+            
         if self.collapsed:
             for widget in self.widgets:
                 widget.pack_forget()
@@ -213,19 +300,11 @@ class Window:
             for widget in self.friends_games_widgets[game]:
                 player_widgets.append(widget)
 
-            dp = DropDownButton(friends_frame, game, player_widgets, width=1000, height=35, corner_radius=0)
+            dp = DropDownButton(friends_frame, game, player_widgets, height=25, corner_radius=0)
             online_games_dropdowns.append(dp)
 
-        online_dropdown = DropDownButton(friends_frame, f"online vrienden ({len(self.friends_online_widgets)})", self.friends_online_widgets, width=1000, height=35, corner_radius=0)
+        online_dropdown = DropDownButton(friends_frame, f"online vrienden ({len(self.friends_online_widgets)})", self.friends_online_widgets, height=25, corner_radius=0)
 
-        for dp in online_games_dropdowns:
-            dp.pack_propagate(False)
-            # dp.pack(side=ctk.TOP, anchor=ctk.W)
-            # dp.on_click()
-
-        online_dropdown.pack_propagate(False)
-        # online_dropdown.pack(side=ctk.TOP, anchor=ctk.W)
-        # online_dropdown.on_click()
         for dp in DropDownButton.dropdowns:
             dp.collapsed = False
 
