@@ -1,5 +1,17 @@
 import customtkinter as ctk
 import SteamAPI
+import requests
+from PIL import Image
+from io import BytesIO
+from dataclasses import dataclass
+
+COL_BG = "#16191C"
+COL_HOVER = "#202227"
+COL_BORDER = "#1D262F"
+COL_STATUS_ONLINE_GREEN = "#91C257"
+COL_STATUS_ONLINE_BLUE = "#6DCFF6"
+COL_GAME_TITLE = "#C0D0CE"
+COL_GREY = "#434953"
 
 
 class StatistiekWindow():
@@ -10,7 +22,6 @@ class StatistiekWindow():
         self.root.geometry(window_size)
 
         self.steam_api_test()
-
 
     def is_open(self):
         """Geeft aan of scherm bestaat"""
@@ -24,10 +35,104 @@ class StatistiekWindow():
         self.root.after(10000, self.steam_api_test)
 
 
+# @dataclass
+# class PlayerData:
+#     name: str
+#     status: SteamAPI.PlayerStatus
+#     playing_game: str
+#     avatar_url: str
+#
+#     def update(self, data: SteamAPI.Player):
+#         self.name = data.get_name()
+#         self.status = data.get_status()
+#         self.playing_game = data.get_playing_game()
+#         self.avatar_url = data.get_avatar(SteamAPI.AvatarFormaat.KLEIN)
+
+
+class PlayerWidget(ctk.CTkButton):
+    def __init__(self,
+                 player,
+                 master: any,
+                 size: tuple[int, int],
+                 avatar_formaat: SteamAPI.AvatarFormaat = SteamAPI.AvatarFormaat.KLEIN,
+                 **kwargs):
+
+        image_data = requests.get(player.get_avatar(avatar_formaat))
+        if not image_data.ok:
+            print("[GUI] AvatarWidget image_data kon niet worden opgehaald")
+
+        image = Image.open(BytesIO(image_data.content))
+        resized_image = image.resize(size, Image.Resampling.LANCZOS)
+        image_widget = ctk.CTkImage(dark_image=resized_image, size=size)
+
+        super().__init__(master,
+                         image=image_widget,
+                         text=player.get_name(),
+                         fg_color=COL_BG,
+                         hover_color=COL_HOVER,
+                         anchor=ctk.W,
+                         command=self.avatar_click,
+                         **kwargs)
+
+    def avatar_click(self):
+        pass
+
+
+class DropDownButton(ctk.CTkButton):
+
+    dropdowns = []
+
+    def __init__(self, master: any, widgets: list[PlayerWidget], **kwargs):
+        self.widgets = widgets
+        self.collapsed = True
+        DropDownButton.dropdowns.append(self)
+        super().__init__(master, **kwargs, command=self.on_click)
+
+    def on_click(self):
+        if self.collapsed:
+            for widget in self.widgets:
+                widget.pack(side=ctk.TOP, anchor=ctk.W)
+        else:
+            for widget in self.widgets:
+                widget.pack_forget()
+
+        self.collapsed = not self.collapsed
+
+        for dropdown in DropDownButton.dropdowns:
+            dropdown.pack(side=ctk.TOP, anchor=ctk.W)
+
+
+class SeparatorLine(ctk.CTkFrame):
+    def __init__(self, master: any, color: str, **kwargs):
+        super().__init__(master, fg_color=color, height=1, width=1000, **kwargs)
+
+    def pack(self, **kwargs):
+        super().pack(padx=0, pady=10, **kwargs)
+
+
 class Window:
-    def __init__(self, naam: str, win_width: int, win_height: int):
+    def __init__(self, naam: str, win_width: int, win_height: int, steamid: str):
+        self.player = SteamAPI.Player(SteamAPI.Api.get_player_summary(steamid))
+        self.player_name = self.player.get_name()
+
+        self.friends = self.player.get_friends()
+        self.friends_online = []
+        self.friends_offline = []
+        self.friends_away = []
+        self.friends_games = {}
+
+        for friend in self.friends:
+            match friend.get_status():
+                case SteamAPI.PlayerStatus.ONLINE:
+                    self.friends_online.append(friend)
+                case SteamAPI.PlayerStatus.OFFLINE:
+                    self.friends_offline.append(friend)
+                case SteamAPI.PlayerStatus.AWAY:
+                    self.friends_away.append(friend)
+
+            self.friends_games[friend.get_playing_game()] = friend
+
         ctk.set_appearance_mode("System")
-        ctk.set_default_color_theme("green")
 
         self.statistiek_window = None
 
@@ -37,8 +142,39 @@ class Window:
         self.root.geometry(f"{win_width}x{win_height}")
         self.root.title(naam)
 
-        button = ctk.CTkButton(self.root, text="knop", command=self.button_click)
-        button.pack()
+        # Frames (links)
+        header_frame = ctk.CTkFrame(self.root, height=80, width=200, fg_color=COL_BG, corner_radius=0)
+        separator = ctk.CTkFrame(self.root, height=25, width=200, fg_color=COL_GREY, corner_radius=0)
+        friends_frame = ctk.CTkScrollableFrame(self.root, width=182, height=10000, fg_color=COL_BG,
+                                               border_color=COL_BORDER, border_width=1, corner_radius=0)
+
+        separator_label = ctk.CTkLabel(separator, text="VRIENDEN", font=("Arial", 12))
+        separator_label.pack(padx=10, pady=5, side=ctk.LEFT)
+
+        header_frame.pack_propagate(False)
+        header_frame.pack(side=ctk.TOP, anchor=ctk.NW)
+
+        separator.pack_propagate(False)
+        separator.pack(side=ctk.TOP, anchor=ctk.NW)
+
+        self.friends_widgets = []
+        for friend in self.friends:
+            w = PlayerWidget(friend, friends_frame, (30, 30),
+                             SteamAPI.AvatarFormaat.KLEIN, font=("Arial", 16), width=120, height=50)
+            w.pack_propagate(False)
+            self.friends_widgets.append(w)
+
+        # TODO:
+        # filter friends by game, status etc..
+
+        test_btn_dropdown = DropDownButton(friends_frame, self.friends_widgets, width=100, height=35, corner_radius=0)
+        test_btn_dropdown.pack_propagate(False)
+        test_btn_dropdown.pack(side=ctk.TOP, anchor=ctk.W)
+
+        lplayer_avatar = PlayerWidget(self.player, header_frame, (50, 50), font=("Arial", 20), width=120, height=60)
+        lplayer_avatar.pack_propagate(False)
+        lplayer_avatar.pack(side=ctk.LEFT, anchor=ctk.NW, pady=10, padx=5)
+        friends_frame.pack(side=ctk.LEFT, anchor=ctk.NW)
 
     def toon_statistiek_window(self):
         if self.statistiek_window is not None:
@@ -48,7 +184,6 @@ class Window:
         self.statistiek_window = StatistiekWindow("Statistiek")
 
     def button_click(self):
-        SteamAPI.test_steam_api()
         self.toon_statistiek_window()
 
     def show(self):

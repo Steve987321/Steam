@@ -25,7 +25,7 @@ def test_steam_api():
     pass
 
 def test_scherm():
-    scherm = Window("Steam Train Groep", 500, 500)
+    scherm = Window("Steam Train Groep", 500, 500, steam_id)
     scherm.show()
 
 class ApiLoop:
@@ -73,5 +73,5 @@ class ApiLoop:
 
 if __name__ == "__main__":
     #test_steamnaam()
-    test_steam_api()
-    # test_scherm()
+    # test_steam_api()
+    test_scherm()
