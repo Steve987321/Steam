@@ -12,6 +12,7 @@ COL_STATUS_ONLINE_GREEN = "#91C257"
 COL_STATUS_ONLINE_BLUE = "#6DCFF6"
 COL_GAME_TITLE = "#C0D0CE"
 COL_GREY = "#434953"
+COL_LIGHT_BLUE = "#78CEF3"
 
 
 class StatistiekWindow():
@@ -35,27 +36,12 @@ class StatistiekWindow():
         self.root.after(10000, self.steam_api_test)
 
 
-# @dataclass
-# class PlayerData:
-#     name: str
-#     status: SteamAPI.PlayerStatus
-#     playing_game: str
-#     avatar_url: str
-#
-#     def update(self, data: SteamAPI.Player):
-#         self.name = data.get_name()
-#         self.status = data.get_status()
-#         self.playing_game = data.get_playing_game()
-#         self.avatar_url = data.get_avatar(SteamAPI.AvatarFormaat.KLEIN)
-
-
-class PlayerWidget(ctk.CTkButton):
+class PlayerWidget:
     def __init__(self,
                  player,
                  master: any,
                  size: tuple[int, int],
-                 avatar_formaat: SteamAPI.AvatarFormaat = SteamAPI.AvatarFormaat.KLEIN,
-                 **kwargs):
+                 avatar_formaat: SteamAPI.AvatarFormaat = SteamAPI.AvatarFormaat.KLEIN):
 
         image_data = requests.get(player.get_avatar(avatar_formaat))
         if not image_data.ok:
@@ -65,14 +51,38 @@ class PlayerWidget(ctk.CTkButton):
         resized_image = image.resize(size, Image.Resampling.LANCZOS)
         image_widget = ctk.CTkImage(dark_image=resized_image, size=size)
 
-        super().__init__(master,
-                         image=image_widget,
-                         text=player.get_name(),
-                         fg_color=COL_BG,
-                         hover_color=COL_HOVER,
-                         anchor=ctk.W,
-                         command=self.avatar_click,
-                         **kwargs)
+        status = ""
+        status_col = ""
+        if player.get_playing_game() != "":
+            status = player.get_playing_game()
+            status_col = COL_STATUS_ONLINE_GREEN
+        else:
+            status = player.get_status().name
+            status_col = COL_LIGHT_BLUE
+
+        self.frame = ctk.CTkFrame(master, width=1000, height=size[1]+20)
+        self.frame.pack_propagate(False)
+
+        self.button = ctk.CTkButton(self.frame, text="", width=size[0], height=size[1], image=image_widget, border_color=status_col,
+                                    border_width=0, border_spacing=0, hover_color=COL_HOVER, fg_color="transparent", command=self.avatar_click)
+        self.button.pack_propagate(False)
+
+        self.name_label = ctk.CTkLabel(self.frame, text=player.get_name(), font=("Arial", 16))
+
+        self.status_label = ctk.CTkLabel(self.frame, text=status, text_color=status_col, font=("Arial", 10))
+
+        self.name_label.pack_propagate(False)
+        self.status_label.pack_propagate(False)
+
+        self.button.pack(side=ctk.LEFT, anchor=ctk.W)
+        self.name_label.pack(side=ctk.TOP, anchor=ctk.NW, padx=5, pady=0)
+        self.status_label.pack(side=ctk.TOP, anchor=ctk.NW, padx=5, pady=0)
+
+    def pack(self, **kwargs):
+        self.frame.pack(**kwargs)
+
+    def pack_forget(self):
+        self.frame.pack_forget()
 
     def avatar_click(self):
         pass
@@ -82,11 +92,11 @@ class DropDownButton(ctk.CTkButton):
 
     dropdowns = []
 
-    def __init__(self, master: any, widgets: list[PlayerWidget], **kwargs):
+    def __init__(self, master: any, title:str, widgets: list[PlayerWidget], **kwargs):
         self.widgets = widgets
         self.collapsed = True
         DropDownButton.dropdowns.append(self)
-        super().__init__(master, **kwargs, command=self.on_click)
+        super().__init__(master, **kwargs, text=title, command=self.on_click)
 
     def on_click(self):
         if self.collapsed:
@@ -157,22 +167,40 @@ class Window:
         separator.pack_propagate(False)
         separator.pack(side=ctk.TOP, anchor=ctk.NW)
 
-        self.friends_widgets = []
-        for friend in self.friends:
+        self.friends_online_widgets = []
+        self.friends_games_widgets = {}  # game - widget
+        for friend in self.friends_online:
             w = PlayerWidget(friend, friends_frame, (30, 30),
-                             SteamAPI.AvatarFormaat.KLEIN, font=("Arial", 16), width=120, height=50)
-            w.pack_propagate(False)
-            self.friends_widgets.append(w)
+                             SteamAPI.AvatarFormaat.KLEIN)
+
+            if friend.get_playing_game() != "":
+                if friend.get_playing_game() not in self.friends_games_widgets.keys():
+                    self.friends_games_widgets[friend.get_playing_game()] = [w]
+                else:
+                    self.friends_games_widgets[friend.get_playing_game()].append(w)
+                continue
+            # player is gewoon online zonder een game te spelen
+            self.friends_online_widgets.append(w)
 
         # TODO:
         # filter friends by game, status etc..
 
-        test_btn_dropdown = DropDownButton(friends_frame, self.friends_widgets, width=100, height=35, corner_radius=0)
-        test_btn_dropdown.pack_propagate(False)
-        test_btn_dropdown.pack(side=ctk.TOP, anchor=ctk.W)
+        online_games_dropdowns = []
+        for game in self.friends_games_widgets.keys():
+            # built button avatar widgets
+            player_widgets = []
+            for widget in self.friends_games_widgets[game]:
+                player_widgets.append(widget)
 
-        lplayer_avatar = PlayerWidget(self.player, header_frame, (50, 50), font=("Arial", 20), width=120, height=60)
-        lplayer_avatar.pack_propagate(False)
+            dp = DropDownButton(friends_frame, game, player_widgets, width=1000, height=35, corner_radius=0)
+            dp.pack_propagate(False)
+            dp.pack(side=ctk.TOP, anchor=ctk.W)
+
+        online_dropdown = DropDownButton(friends_frame, f"online vrienden ({len(self.friends_online_widgets)})", self.friends_online_widgets, width=100, height=35, corner_radius=0)
+        online_dropdown.pack_propagate(False)
+        online_dropdown.pack(side=ctk.TOP, anchor=ctk.W)
+
+        lplayer_avatar = PlayerWidget(self.player, header_frame, (50, 50))
         lplayer_avatar.pack(side=ctk.LEFT, anchor=ctk.NW, pady=10, padx=5)
         friends_frame.pack(side=ctk.LEFT, anchor=ctk.NW)
 
