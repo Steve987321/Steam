@@ -22,11 +22,11 @@ def test_steam_api():
     print("game:", player.get_playing_game())
     print("avatar url:", player.get_avatar(SteamAPI.AvatarFormaat.KLEIN))
 
-    pass
 
 def test_scherm():
     scherm = Window("Steam Train Groep", 500, 500)
     scherm.show()
+
 
 class ApiLoop:
     def test_steam_api(self):

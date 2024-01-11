@@ -20,6 +20,7 @@ class AvatarFormaat(IntEnum):
     MIDDEL = 1,     # 64x64
     GROOT = 2       # 184x184
 
+
 try:
     with open("STEAM_API_KEY.txt") as key:
         KEY = key.readline()

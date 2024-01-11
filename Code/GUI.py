@@ -11,7 +11,6 @@ class StatistiekWindow():
 
         self.steam_api_test()
 
-
     def is_open(self):
         """Geeft aan of scherm bestaat"""
         return self.root.winfo_exists()
