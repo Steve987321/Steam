@@ -3,6 +3,7 @@ import SteamAPI
 import requests
 from PIL import Image
 from io import BytesIO
+
 from dataclasses import dataclass
 
 COL_BG = "#16191C"
@@ -93,23 +94,43 @@ class DropDownButton(ctk.CTkButton):
     dropdowns = []
 
     def __init__(self, master: any, title:str, widgets: list[PlayerWidget], **kwargs):
+        self.master = master
         self.widgets = widgets
-        self.collapsed = True
+        self.collapsed = False
+        self.separator = SeparatorLine(self.master, COL_BORDER)
+        self.title = title
         DropDownButton.dropdowns.append(self)
-        super().__init__(master, **kwargs, text=title, command=self.on_click)
+        super().__init__(self.master, **kwargs, text=title, command=self.on_click)
+
+    @staticmethod
+    def reset():
+        for dp in DropDownButton.dropdowns:
+            print(dp.title)
+            dp.pack_forget()
+            dp.pack(side=ctk.TOP, anchor=ctk.W)
+
+            if not dp.collapsed:
+                for widget in dp.widgets:
+                    widget.pack_forget()
+                    widget.pack(side=ctk.TOP, anchor=ctk.W)
+
+            dp.separator.pack_forget()
+            dp.separator.pack()
 
     def on_click(self):
+        self.collapsed = not self.collapsed
+
         if self.collapsed:
-            for widget in self.widgets:
-                widget.pack(side=ctk.TOP, anchor=ctk.W)
-        else:
             for widget in self.widgets:
                 widget.pack_forget()
 
-        self.collapsed = not self.collapsed
+        DropDownButton.reset()
 
-        for dropdown in DropDownButton.dropdowns:
-            dropdown.pack(side=ctk.TOP, anchor=ctk.W)
+        # for dropdown in DropDownButton.dropdowns:
+        #     dropdown.pack_forget()
+        #     dropdown.pack(side=ctk.TOP, anchor=ctk.W)
+        #     dropdown.separator.pack_forget()
+        #     dropdown.separator.pack()
 
 
 class SeparatorLine(ctk.CTkFrame):
@@ -117,7 +138,7 @@ class SeparatorLine(ctk.CTkFrame):
         super().__init__(master, fg_color=color, height=1, width=1000, **kwargs)
 
     def pack(self, **kwargs):
-        super().pack(padx=0, pady=10, **kwargs)
+        super().pack(padx=0, pady=5, **kwargs)
 
 
 class Window:
@@ -193,12 +214,22 @@ class Window:
                 player_widgets.append(widget)
 
             dp = DropDownButton(friends_frame, game, player_widgets, width=1000, height=35, corner_radius=0)
-            dp.pack_propagate(False)
-            dp.pack(side=ctk.TOP, anchor=ctk.W)
+            online_games_dropdowns.append(dp)
 
-        online_dropdown = DropDownButton(friends_frame, f"online vrienden ({len(self.friends_online_widgets)})", self.friends_online_widgets, width=100, height=35, corner_radius=0)
+        online_dropdown = DropDownButton(friends_frame, f"online vrienden ({len(self.friends_online_widgets)})", self.friends_online_widgets, width=1000, height=35, corner_radius=0)
+
+        for dp in online_games_dropdowns:
+            dp.pack_propagate(False)
+            # dp.pack(side=ctk.TOP, anchor=ctk.W)
+            # dp.on_click()
+
         online_dropdown.pack_propagate(False)
-        online_dropdown.pack(side=ctk.TOP, anchor=ctk.W)
+        # online_dropdown.pack(side=ctk.TOP, anchor=ctk.W)
+        # online_dropdown.on_click()
+        for dp in DropDownButton.dropdowns:
+            dp.collapsed = False
+
+        DropDownButton.reset()
 
         lplayer_avatar = PlayerWidget(self.player, header_frame, (50, 50))
         lplayer_avatar.pack(side=ctk.LEFT, anchor=ctk.NW, pady=10, padx=5)
