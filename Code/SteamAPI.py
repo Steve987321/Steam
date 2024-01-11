@@ -119,7 +119,8 @@ class Player:
         except KeyError as e:
             print(f"[Player] naam kan niet worden gevonden: {e}")
         except ValueError as e:
-            print(f'{e}')
+            print(f"[Player] profile state is invalid: {e}")
+
         pass
 
     def get_avatar(self, formaat: AvatarFormaat) -> str:
