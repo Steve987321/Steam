@@ -137,9 +137,11 @@ class DropDownButton(ctk.CTkFrame):
         super().__init__(self.master, **kwargs, fg_color="transparent")
 
         self.title_widget = ctk.CTkLabel(self, text=title, anchor=ctk.W)
-        self.collapse_widget = ctk.CTkLabel(self, text='-', anchor=ctk.W, text_color=self.collapse_widget_color)
-        self.collapse_widget.pack(side=ctk.LEFT)
-        self.title_widget.pack(side=ctk.LEFT)
+        self.collapse_widget = ctk.CTkLabel(self, text='-', font=("Arial", 14), anchor=ctk.W, text_color=self.collapse_widget_color)
+        self.count_widget = ctk.CTkLabel(self, text=f"({len(widgets)})", font=("Arial", 12), anchor=ctk.W, text_color=COL_GREY)
+        self.collapse_widget.pack(side=ctk.LEFT, padx=2)
+        self.title_widget.pack(side=ctk.LEFT, padx=2)
+        self.count_widget.pack(side=ctk.LEFT, padx=2)
 
         self.title_widget.bind("<Button-1>", self.on_click)
         self.title_widget.bind("<Enter>", self.on_hover)
@@ -206,7 +208,7 @@ class DropDownButton(ctk.CTkFrame):
             self.collapse_widget.configure(text="+")
         else:
             self.collapse_widget.configure(text="-")
-            
+
         if self.collapsed:
             for widget in self.widgets:
                 widget.pack_forget()
@@ -303,7 +305,7 @@ class Window:
             dp = DropDownButton(friends_frame, game, player_widgets, height=25, corner_radius=0)
             online_games_dropdowns.append(dp)
 
-        online_dropdown = DropDownButton(friends_frame, f"online vrienden ({len(self.friends_online_widgets)})", self.friends_online_widgets, height=25, corner_radius=0)
+        online_dropdown = DropDownButton(friends_frame, f"online vrienden", self.friends_online_widgets, height=25, corner_radius=0)
 
         for dp in DropDownButton.dropdowns:
             dp.collapsed = False
