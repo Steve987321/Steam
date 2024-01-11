@@ -115,9 +115,11 @@ class Player:
     def get_status(self) -> PlayerStatus:
         """Return steam status """
         try:
-            return PlayerStatus(self.data["profilestate"])
+            return PlayerStatus(int(self.data["personastate"]))
         except KeyError as e:
             print(f"[Player] naam kan niet worden gevonden: {e}")
+        except ValueError as e:
+            print(f"[Player] profile state is invalid: {e}")
 
         pass
 
