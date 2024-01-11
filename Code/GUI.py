@@ -10,8 +10,11 @@ from dataclasses import dataclass
 COL_BG = "#16191C"
 COL_HOVER = "#202227"
 COL_BORDER = "#1D262F"
+COL_LABEL = "#B7CCD5"
 COL_STATUS_ONLINE_GREEN = "#91C257"
 COL_STATUS_NAME_PLAYING = "#D6F1B8"
+COL_STATUS_OFFLINE_NAME_GREY = "#979798"
+COL_STATUS_OFFLINE_GREY = "#6E6E6E"
 COL_GAME_TITLE = "#C0D0CE"
 COL_GREY = "#434953"
 COL_GREY_WIDGET = "#868789"
@@ -81,15 +84,23 @@ class PlayerWidget:
         status = ""
         status_col = ""
         status_name_col = ""
-        if player.get_playing_game() != "":
-            status = player.get_playing_game()
-            status_col = COL_STATUS_ONLINE_GREEN
-            status_name_col = COL_STATUS_NAME_PLAYING
-        else:
-            status = player.get_status().name.lower()
-            status = status.replace(status[0], status[0].upper(), 1)
-            status_col = COL_DARK_BLUE
-            status_name_col = COL_LIGHT_BLUE
+        match player.get_status():
+            case SteamAPI.PlayerStatus.ONLINE:
+                if player.get_playing_game() != "":
+                    status = player.get_playing_game()
+                    status_col = COL_STATUS_ONLINE_GREEN
+                    status_name_col = COL_STATUS_NAME_PLAYING
+                else:
+                    status = player.get_status().name.lower()
+                    status = status.replace(status[0], status[0].upper(), 1)
+                    status_col = COL_DARK_BLUE
+                    status_name_col = COL_LIGHT_BLUE
+            case SteamAPI.PlayerStatus.OFFLINE:
+                status = player.get_status().name.lower()
+                status = status.replace(status[0], status[0].upper(), 1)
+                status_col = COL_STATUS_OFFLINE_GREY
+                status_name_col = COL_STATUS_OFFLINE_NAME_GREY
+
 
         self.frame = ctk.CTkFrame(master, width=1000, height=size[1]+20, fg_color="transparent")
         self.frame.pack_propagate(False)
@@ -136,7 +147,7 @@ class DropDownButton(ctk.CTkFrame):
 
         super().__init__(self.master, **kwargs, fg_color="transparent")
 
-        self.title_widget = ctk.CTkLabel(self, text=title, anchor=ctk.W)
+        self.title_widget = ctk.CTkLabel(self, text=title, anchor=ctk.W, text_color=COL_LABEL)
         self.collapse_widget = ctk.CTkLabel(self, text='-', font=("Arial", 14), anchor=ctk.W, text_color=self.collapse_widget_color)
         self.count_widget = ctk.CTkLabel(self, text=f"({len(widgets)})", font=("Arial", 12), anchor=ctk.W, text_color=COL_GREY)
         self.collapse_widget.pack(side=ctk.LEFT, padx=2)
@@ -151,12 +162,12 @@ class DropDownButton(ctk.CTkFrame):
     def reset():
         for dp in DropDownButton.dropdowns:
             dp.pack_forget()
-            dp.pack(side=ctk.TOP, anchor=ctk.W, pady=1, padx=2, expand=True, fill=ctk.X)
+            dp.pack(side=ctk.TOP, anchor=ctk.W, pady=0, padx=2, expand=True, fill=ctk.X)
 
             if not dp.collapsed:
                 for widget in dp.widgets:
                     widget.pack_forget()
-                    widget.pack(side=ctk.TOP, anchor=ctk.W, pady=1)
+                    widget.pack(side=ctk.TOP, anchor=ctk.W, pady=0)
 
             dp.separator.pack_forget()
             dp.separator.pack()
@@ -215,12 +226,6 @@ class DropDownButton(ctk.CTkFrame):
 
         DropDownButton.reset()
 
-        # for dropdown in DropDownButton.dropdowns:
-        #     dropdown.pack_forget()
-        #     dropdown.pack(side=ctk.TOP, anchor=ctk.W)
-        #     dropdown.separator.pack_forget()
-        #     dropdown.separator.pack()
-
 
 class SeparatorLine(ctk.CTkFrame):
     def __init__(self, master: any, color: str, **kwargs):
@@ -268,7 +273,7 @@ class Window:
         friends_frame = ctk.CTkScrollableFrame(self.root, width=182, height=10000, fg_color=COL_BG,
                                                border_color=COL_BORDER, border_width=1, corner_radius=0)
 
-        separator_label = ctk.CTkLabel(separator, text="VRIENDEN", font=("Arial", 12))
+        separator_label = ctk.CTkLabel(separator, text="VRIENDEN", font=("Arial", 12), text_color=COL_LABEL)
         separator_label.pack(padx=10, pady=5, side=ctk.LEFT)
 
         header_frame.pack_propagate(False)
@@ -278,6 +283,7 @@ class Window:
         separator.pack(side=ctk.TOP, anchor=ctk.NW)
 
         self.friends_online_widgets = []
+        self.friends_offline_widgets = []
         self.friends_games_widgets = {}  # game - widget
         for friend in self.friends_online:
             w = PlayerWidget(friend, friends_frame, (30, 30),
@@ -292,6 +298,13 @@ class Window:
             # player is gewoon online zonder een game te spelen
             self.friends_online_widgets.append(w)
 
+        for friend in self.friends_offline:
+            w = PlayerWidget(friend, friends_frame, (30, 30),
+                             SteamAPI.AvatarFormaat.KLEIN)
+
+            # player is gewoon online zonder een game te spelen
+            self.friends_offline_widgets.append(w)
+
         # TODO:
         # filter friends by game, status etc..
 
@@ -305,7 +318,8 @@ class Window:
             dp = DropDownButton(friends_frame, game, player_widgets, height=25, corner_radius=0)
             online_games_dropdowns.append(dp)
 
-        online_dropdown = DropDownButton(friends_frame, f"online vrienden", self.friends_online_widgets, height=25, corner_radius=0)
+        DropDownButton(friends_frame, f"Online vrienden", self.friends_online_widgets, height=25, corner_radius=0)
+        DropDownButton(friends_frame, f"Offline", self.friends_offline_widgets, height=25, corner_radius=0)
 
         for dp in DropDownButton.dropdowns:
             dp.collapsed = False
