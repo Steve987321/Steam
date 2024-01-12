@@ -364,7 +364,7 @@ class Window:
         self.info_panel.pack_propagate(False)
         self.friend_list_panel.pack(side=ctk.LEFT, fill=ctk.BOTH)
         self.panel_separator.pack(side=ctk.LEFT)
-        self.info_panel.pack(side=ctk.LEFT, fill=ctk.BOTH)
+        self.info_panel.pack(side=ctk.LEFT, fill=ctk.BOTH, expand=True)
 
     def panel_separator_mouse_enter(self, _):
         self.root.configure(cursor="sb_h_double_arrow")
