@@ -53,6 +53,38 @@ def lerp_color(col1, col2, t):
     return f"#{r}{g}{b}"
 
 
+class Tab(ctk.CTkFrame):
+    def __init__(self, master: any, text, tabbar, content: ctk.CTkFrame, command: (), **kwargs):
+        super().__init__(master, **kwargs)
+
+        self.tabbar = tabbar
+        self.button = ctk.CTkButton(self, text=text, command=command)
+        self.content = content
+        self.close_button = ctk.CTkButton(self, text='X', command=self.on_close)
+
+    def on_close(self):
+        self.tabbar.remove_tab(self)
+
+
+class TabBar(ctk.CTkFrame):
+    def __init__(self, master: any, **kwargs):
+        self.tabs = []
+        super().__init__(master, **kwargs)
+
+    def reset(self):
+        for tab in self.tabs:
+            tab.pack(side=ctk.LEFT)
+
+    def add_tab(self, tab: Tab):
+        self.tabs.append(tab)
+        self.reset()
+
+    def remove_tab(self, tab: Tab):
+        if tab in self.tabs:
+            self.tabs.remove(tab)
+            self.reset()
+
+
 class StatistiekWindow:
     def __init__(self, window_name: str = "SubWindow", window_size: str = "1080x1440"):
         self.root = ctk.CTkToplevel()
@@ -306,6 +338,8 @@ class Window:
 
         # ... (rechts) TODO: wat komt hier?
         self.info_panel = ctk.CTkFrame(self.root, width=self.info_panel_width, fg_color=COL_BG, border_color=COL_BORDER, border_width=1, corner_radius=0)
+        self.info_panel_tabbar = TabBar(self.info_panel)
+        self.info_panel_tabbar
         temp = ctk.CTkLabel(self.info_panel, text="Druk op een vriend om te starten", text_color=COL_GREY_WIDGET, font=("Arial", 20))
         temp.pack(anchor=ctk.CENTER, fill=ctk.BOTH, expand=True)
 
@@ -381,7 +415,7 @@ class Window:
                 offsetx = event.x - self.panel_start_x
 
                 new_width = self.friend_list_panel.cget("width") + offsetx
-                new_width = clamp(new_width, self.root.winfo_width() // 3, self.root.winfo_width() - self.root.winfo_width() // 3)
+                new_width = clamp(new_width, 120, self.root.winfo_width() - self.root.winfo_width() // 3)
 
                 self.friend_list_panel.configure(width=new_width)
         except TypeError:
