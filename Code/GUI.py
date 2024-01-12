@@ -27,6 +27,14 @@ def lerp(a, b, t):
     return a + (b - a) * t
 
 
+def clamp(v, min, max):
+    if v >= max:
+        return max
+    elif v <= min:
+        return min
+    return v
+
+
 def lerp_color(col1, col2, t):
     # naar dec
     r1 = int(col1[1:3], 16)
@@ -262,6 +270,10 @@ class Window:
 
             self.friends_games[friend.get_playing_game()] = friend
 
+
+        self.panel_start_x = 0
+        self.panel_start_y = 0
+
         ctk.set_appearance_mode("System")
 
         self.statistiek_window = None
@@ -356,15 +368,25 @@ class Window:
 
     def panel_separator_mouse_enter(self, _):
         self.root.configure(cursor="sb_h_double_arrow")
-        pass
 
     def panel_separator_mouse_leave(self, _):
         self.root.configure(cursor="")
-        pass
 
     def panel_separator_mouse_held(self, event):
-        print("panel_held", event)
-        pass
+        try:
+            if event.state == 256 or event.state == 512:
+                if self.panel_start_x == 0:
+                    self.panel_start_x = event.x
+
+                offsetx = event.x - self.panel_start_x
+
+                new_width = self.friend_list_panel.cget("width") + offsetx
+                new_width = clamp(new_width, self.root.winfo_width() // 3, self.root.winfo_width() - self.root.winfo_width() // 3)
+
+                self.friend_list_panel.configure(width=new_width)
+        except TypeError:
+            self.panel_start_x = 0
+            pass
 
     def toon_statistiek_window(self):
         if self.statistiek_window is not None:
