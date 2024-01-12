@@ -7,9 +7,10 @@ import sys
 
 from dataclasses import dataclass
 
-COL_BG = "#16191C"
+COL_BG = "#202228"
 COL_HOVER = "#202227"
-COL_BORDER = "#1D262F"
+COL_BORDER = "#30627F"
+COL_BORDER_BLACK ="#121216"
 COL_LABEL = "#B7CCD5"
 COL_STATUS_ONLINE_GREEN = "#91C257"
 COL_STATUS_NAME_PLAYING = "#D6F1B8"
@@ -32,12 +33,11 @@ def lerp_color(col1, col2, t):
     g1 = int(col1[3:5], 16)
     b1 = int(col1[5:7], 16)
 
-    # lerp
     r2 = int(col2[1:3], 16)
     g2 = int(col2[3:5], 16)
     b2 = int(col2[5:7], 16)
 
-    # naar hex
+    # lerp en naar hex
     r = format(int(lerp(r1, r2, t)), "02x")
     g = format(int(lerp(g1, g2, t)), "02x")
     b = format(int(lerp(b1, b2, t)), "02x")
@@ -101,8 +101,7 @@ class PlayerWidget:
                 status_col = COL_STATUS_OFFLINE_GREY
                 status_name_col = COL_STATUS_OFFLINE_NAME_GREY
 
-
-        self.frame = ctk.CTkFrame(master, width=1000, height=size[1]+20, fg_color="transparent")
+        self.frame = ctk.CTkFrame(master, width=1000, height=size[1]+10, fg_color="transparent")
         self.frame.pack_propagate(False)
 
         self.button = ctk.CTkButton(self.frame, text="", width=size[0], height=size[1], image=image_widget, border_color=status_col,
@@ -118,9 +117,9 @@ class PlayerWidget:
 
         self.button.pack(side=ctk.LEFT, anchor=ctk.W)
         # spacing
-        ctk.CTkFrame(self.frame, height=8, fg_color="transparent").pack(side=ctk.TOP)
+        ctk.CTkFrame(self.frame, height=5, fg_color="transparent").pack(side=ctk.TOP)
         self.name_label.pack(side=ctk.TOP, anchor=ctk.W, padx=5, pady=0)
-        self.status_label.pack(side=ctk.TOP, anchor=ctk.W, padx=5, pady=0)
+        self.status_label.pack(side=ctk.TOP, anchor=ctk.W, padx=5, pady=1)
 
     def pack(self, **kwargs):
         self.frame.pack(**kwargs)
@@ -168,9 +167,8 @@ class DropDownButton(ctk.CTkFrame):
                 for widget in dp.widgets:
                     widget.pack_forget()
                     widget.pack(side=ctk.TOP, anchor=ctk.W, pady=0)
-
             dp.separator.pack_forget()
-            dp.separator.pack()
+            dp.separator.pack(pady=5)
 
     def on_hover(self, _):
         # print("fade in start ")
@@ -211,7 +209,6 @@ class DropDownButton(ctk.CTkFrame):
             self.animation_steps = 1
             self.collapse_widget.configure(text_color=self.collapse_widget_color)
 
-
     def on_click(self, _):
         self.collapsed = not self.collapsed
 
@@ -229,10 +226,18 @@ class DropDownButton(ctk.CTkFrame):
 
 class SeparatorLine(ctk.CTkFrame):
     def __init__(self, master: any, color: str, **kwargs):
-        super().__init__(master, fg_color=color, height=1, width=1000, **kwargs)
+        super().__init__(master, fg_color=color, height=1, **kwargs)
 
     def pack(self, **kwargs):
-        super().pack(padx=0, pady=5, **kwargs)
+        super().pack(fill=ctk.X, padx=0, **kwargs)
+
+
+class SeparatorLineV(ctk.CTkFrame):
+    def __init__(self, master: any, color: str, **kwargs):
+        super().__init__(master, fg_color=color, width=6, **kwargs)
+
+    def pack(self, **kwargs):
+        super().pack(fill=ctk.Y, padx=0, pady=0, **kwargs)
 
 
 class Window:
@@ -267,20 +272,33 @@ class Window:
         self.root.geometry(f"{win_width}x{win_height}")
         self.root.title(naam)
 
-        # Frames (links)
-        header_frame = ctk.CTkFrame(self.root, height=80, width=200, fg_color=COL_BG, corner_radius=0)
-        separator = ctk.CTkFrame(self.root, height=25, width=200, fg_color=COL_GREY, corner_radius=0)
-        friends_frame = ctk.CTkScrollableFrame(self.root, width=182, height=10000, fg_color=COL_BG,
-                                               border_color=COL_BORDER, border_width=1, corner_radius=0)
+        # Panels
 
+        # Vrienden Lijst
+        self.friend_list_panel_width = win_width // 3
+        self.info_panel_width = win_width - self.friend_list_panel_width
+
+        self.friend_list_panel = ctk.CTkFrame(self.root, width=self.friend_list_panel_width, fg_color=COL_BG, border_color=COL_BORDER, border_width=1, corner_radius=0)
+        header_frame = ctk.CTkFrame(self.friend_list_panel, fg_color=COL_BG, height=80, corner_radius=0)
+        separator = ctk.CTkFrame(self.friend_list_panel, fg_color=COL_GREY, height=25, corner_radius=0)
+        friends_frame = ctk.CTkScrollableFrame(self.friend_list_panel, fg_color=COL_BG,
+                                               border_color=COL_BORDER, corner_radius=0)
         separator_label = ctk.CTkLabel(separator, text="VRIENDEN", font=("Arial", 12), text_color=COL_LABEL)
         separator_label.pack(padx=10, pady=5, side=ctk.LEFT)
 
-        header_frame.pack_propagate(False)
-        header_frame.pack(side=ctk.TOP, anchor=ctk.NW)
+        # Panel separator (x resizer)
+        self.panel_separator = SeparatorLineV(self.root, "#23252A", border_width=1, corner_radius=0, border_color=COL_BORDER_BLACK)
+        self.panel_separator.bind("<Enter>", self.panel_separator_mouse_enter)
+        self.panel_separator.bind("<Leave>", self.panel_separator_mouse_leave)
+        self.panel_separator.bind("<Motion>", self.panel_separator_mouse_held)
 
+        # ... (rechts) TODO: wat komt hier?
+        self.info_panel = ctk.CTkFrame(self.root, width=self.info_panel_width, fg_color=COL_BG, border_color=COL_BORDER, border_width=1, corner_radius=0)
+        temp = ctk.CTkLabel(self.info_panel, text="Druk op een vriend om te starten", text_color=COL_GREY_WIDGET, font=("Arial", 20))
+        temp.pack(anchor=ctk.CENTER, fill=ctk.BOTH, expand=True)
+
+        header_frame.pack_propagate(False)
         separator.pack_propagate(False)
-        separator.pack(side=ctk.TOP, anchor=ctk.NW)
 
         self.friends_online_widgets = []
         self.friends_offline_widgets = []
@@ -305,9 +323,6 @@ class Window:
             # player is gewoon online zonder een game te spelen
             self.friends_offline_widgets.append(w)
 
-        # TODO:
-        # filter friends by game, status etc..
-
         online_games_dropdowns = []
         for game in self.friends_games_widgets.keys():
             # built button avatar widgets
@@ -326,9 +341,30 @@ class Window:
 
         DropDownButton.reset()
 
+        header_frame.pack(side=ctk.TOP, fill=ctk.X)
+        separator.pack(side=ctk.TOP, fill=ctk.X)
+
         lplayer_avatar = PlayerWidget(self.player, header_frame, (50, 50))
-        lplayer_avatar.pack(side=ctk.LEFT, anchor=ctk.NW, pady=10, padx=5)
-        friends_frame.pack(side=ctk.LEFT, anchor=ctk.NW)
+        lplayer_avatar.pack(side=ctk.TOP, pady=10, padx=5)
+        friends_frame.pack(side=ctk.TOP, fill=ctk.BOTH, expand=True)
+
+        self.friend_list_panel.pack_propagate(False)
+        self.info_panel.pack_propagate(False)
+        self.friend_list_panel.pack(side=ctk.LEFT, fill=ctk.BOTH)
+        self.panel_separator.pack(side=ctk.LEFT)
+        self.info_panel.pack(side=ctk.LEFT, fill=ctk.BOTH)
+
+    def panel_separator_mouse_enter(self, _):
+        self.root.configure(cursor="sb_h_double_arrow")
+        pass
+
+    def panel_separator_mouse_leave(self, _):
+        self.root.configure(cursor="")
+        pass
+
+    def panel_separator_mouse_held(self, event):
+        print("panel_held", event)
+        pass
 
     def toon_statistiek_window(self):
         if self.statistiek_window is not None:
