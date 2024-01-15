@@ -39,7 +39,7 @@ def plot1():
     cols = ['price', 'average_playtime']
     data = []
 
-    with open("test.json") as f:
+    with open("steam.json") as f:
         doc = json.load(f)
         for line in doc:
             lst = [line['price'], line['average_playtime'] / 60]
@@ -62,7 +62,7 @@ def plot2():
     cols = ['price', 'count']
     data = []
 
-    with open("test.json") as f:
+    with open("steam.json") as f:
         doc = json.load(f)
         for line in doc:
             data.append(line['price'])
@@ -71,7 +71,7 @@ def plot2():
     s = pd.Series(counted, name="count")
     s.index.name = "price"
     s = s.reset_index()
-    print(s)
+
     X = s.iloc[:, 0]
     Y = s.iloc[:, 1]
 
@@ -79,3 +79,6 @@ def plot2():
     plt.xlim(0, 30)
     plt.show()
 
+
+plot1()
+plot2()
