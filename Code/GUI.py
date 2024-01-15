@@ -407,13 +407,16 @@ class Window:
         self.info_panel.pack(side=ctk.LEFT, fill=ctk.BOTH, expand=True)
 
     def panel_separator_mouse_enter(self, _):
+        self.panel_separator.configure(fg_color="#343740")
         self.root.configure(cursor="sb_h_double_arrow")
 
     def panel_separator_mouse_leave(self, _):
+        self.panel_separator.configure(fg_color="#23252A")
         self.root.configure(cursor="")
 
     def panel_separator_mouse_held(self, event):
         try:
+            # muis knoppen
             if event.state == 256 or event.state == 512:
                 if self.panel_start_x == 0:
                     self.panel_start_x = event.x
