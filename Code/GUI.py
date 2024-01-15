@@ -140,6 +140,8 @@ class PlayerWidget:
             case _:
                 pass
 
+        self.status_str = status_str
+
         self.frame = ctk.CTkFrame(master, width=1000, height=size[1]+10, fg_color="transparent")
         self.frame.pack_propagate(False)
 
@@ -150,6 +152,21 @@ class PlayerWidget:
         self.name_label = ctk.CTkLabel(self.frame, text=player.get_name(), text_color=status_name_col, font=("Arial", 15), height=0, anchor=ctk.W)
 
         self.status_label = ctk.CTkLabel(self.frame, text=status_str, text_color=status_col, font=("Arial", 12), height=0, anchor=ctk.W)
+
+        self.frame.bind("<Enter>", self.on_mouse_enter)
+        self.frame.bind("<Leave>", self.on_mouse_leave)
+        self.frame.bind("<Button-1>", self.on_mouse_press)
+
+        self.button.bind("<Enter>", self.on_mouse_enter)
+        self.button.bind("<Leave>", self.on_mouse_leave)
+
+        self.status_label.bind("<Enter>", self.on_mouse_enter)
+        self.status_label.bind("<Leave>", self.on_mouse_leave)
+        self.status_label.bind("<Button-1>", self.on_mouse_press)
+
+        self.name_label.bind("<Enter>", self.on_mouse_enter)
+        self.name_label.bind("<Leave>", self.on_mouse_leave)
+        self.name_label.bind("<Button-1>", self.on_mouse_press)
 
         self.name_label.pack_propagate(False)
         self.status_label.pack_propagate(False)
@@ -166,7 +183,20 @@ class PlayerWidget:
     def pack_forget(self):
         self.frame.pack_forget()
 
-    def avatar_click(self):
+    def on_mouse_enter(self, _):
+        if self.status_str.lower() == "online":
+            self.frame.configure(fg_color="#23282F")
+        else:
+            self.frame.configure(fg_color="#0F0F12")
+
+    def on_mouse_leave(self, _):
+        self.frame.configure(fg_color="transparent")
+        pass
+
+    def on_mouse_press(self, _):
+        pass
+
+    def avatar_click(self, _):
         pass
 
 
@@ -219,7 +249,6 @@ class DropDownButton(ctk.CTkFrame):
                 dp.separator.pack(pady=5)
 
     def on_hover(self, _):
-        # print("fade in start ")
         self.animation_steps = 0
         self.collapse_widget_color = COL_GREY_WIDGET
         self.fade_in()
@@ -342,12 +371,14 @@ class Window:
         self.panel_separator.bind("<Leave>", self.panel_separator_mouse_leave)
         self.panel_separator.bind("<Motion>", self.panel_separator_mouse_held)
 
-        # ... (rechts) TODO: wat komt hier?
-        self.info_panel = ctk.CTkFrame(self.root, width=self.info_panel_width, fg_color=COL_BG, border_color=COL_BORDER, border_width=1, corner_radius=0)
-        self.info_panel_tabbar = TabBar(self.info_panel)
-        self.info_panel_tabbar
+        self.info_panel = ctk.CTkFrame(self.root, width=self.info_panel_width, fg_color=COL_BG, border_color=COL_BORDER, border_width=0, corner_radius=0)
+        self.info_panel_tabbar = TabBar(self.info_panel, height=60, corner_radius=0)
+
         temp = ctk.CTkLabel(self.info_panel, text="Druk op een vriend om te starten", text_color=COL_GREY_WIDGET, font=("Arial", 20))
-        temp.pack(anchor=ctk.CENTER, fill=ctk.BOTH, expand=True)
+        self.info_panel_tabbar.pack_propagate(False)
+        temp.pack_propagate(False)
+        self.info_panel_tabbar.pack(anchor=ctk.N, side=ctk.TOP, fill=ctk.X, expand=True)
+        temp.pack(side=ctk.TOP, fill=ctk.BOTH, expand=True)
 
         header_frame.pack_propagate(False)
         separator.pack_propagate(False)
