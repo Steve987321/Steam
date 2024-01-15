@@ -77,6 +77,9 @@ def plot2():
 
     plt.bar(X, Y)
     plt.xlim(0, 30)
+    plt.title("How many games have the same price?")
+    plt.xlabel("Price")
+    plt.ylabel("Count")
     plt.show()
 
 
