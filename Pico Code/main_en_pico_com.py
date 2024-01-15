@@ -27,10 +27,7 @@ with serial.Serial(port=pico_port, baudrate=115200, bytesize=8, parity='N', stop
         serial_port.open()
 
     try:
-        data = "[['Damian'], [], []]\r" # AANPASSSEN NOG
-        # 1 -> vrienden status
-        # 2 -> vrienden game
-        # 3 -> populaire game | aanbieding
+        data = "[ [], [], [] ]\r"
         serial_port.write(data.encode())
         pico_output = read_serial(serial_port)
         pico_output = pico_output.replace('\r\n', ' ')
