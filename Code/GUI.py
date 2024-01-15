@@ -121,25 +121,24 @@ class PlayerWidget:
         resized_image = image.resize(size, Image.Resampling.LANCZOS)
         image_widget = ctk.CTkImage(dark_image=resized_image, size=size)
 
-        status = ""
-        status_col = ""
-        status_name_col = ""
+        status_str = player.get_status().name.lower()
+        status_str = status_str.replace(status_str[0], status_str[0].upper(), 1)
+        status_col = COL_DARK_BLUE
+        status_name_col = COL_LIGHT_BLUE
         match player.get_status():
             case SteamAPI.PlayerStatus.ONLINE:
                 if player.get_playing_game() != "":
-                    status = player.get_playing_game()
+                    status_str = player.get_playing_game()
                     status_col = COL_STATUS_ONLINE_GREEN
                     status_name_col = COL_STATUS_NAME_PLAYING
                 else:
-                    status = player.get_status().name.lower()
-                    status = status.replace(status[0], status[0].upper(), 1)
                     status_col = COL_DARK_BLUE
                     status_name_col = COL_LIGHT_BLUE
             case SteamAPI.PlayerStatus.OFFLINE:
-                status = player.get_status().name.lower()
-                status = status.replace(status[0], status[0].upper(), 1)
                 status_col = COL_STATUS_OFFLINE_GREY
                 status_name_col = COL_STATUS_OFFLINE_NAME_GREY
+            case _:
+                pass
 
         self.frame = ctk.CTkFrame(master, width=1000, height=size[1]+10, fg_color="transparent")
         self.frame.pack_propagate(False)
@@ -150,7 +149,7 @@ class PlayerWidget:
 
         self.name_label = ctk.CTkLabel(self.frame, text=player.get_name(), text_color=status_name_col, font=("Arial", 15), height=0, anchor=ctk.W)
 
-        self.status_label = ctk.CTkLabel(self.frame, text=status, text_color=status_col, font=("Arial", 12), height=0, anchor=ctk.W)
+        self.status_label = ctk.CTkLabel(self.frame, text=status_str, text_color=status_col, font=("Arial", 12), height=0, anchor=ctk.W)
 
         self.name_label.pack_propagate(False)
         self.status_label.pack_propagate(False)
@@ -179,9 +178,10 @@ class DropDownButton(ctk.CTkFrame):
         self.master = master
         self.widgets = widgets
         self.collapsed = False
-        self.separator = SeparatorLine(self.master, COL_BORDER)
         self.collapse_widget_color = COL_BG
         self.animation_steps = 0
+        self.separator = SeparatorLine(self.master, COL_BORDER)
+
         DropDownButton.dropdowns.append(self)
 
         super().__init__(self.master, **kwargs, fg_color="transparent")
@@ -199,7 +199,10 @@ class DropDownButton(ctk.CTkFrame):
 
     @staticmethod
     def reset():
+        i = 0
         for dp in DropDownButton.dropdowns:
+            i += 1
+
             dp.pack_forget()
             dp.pack(side=ctk.TOP, anchor=ctk.W, pady=0, padx=2, expand=True, fill=ctk.X)
 
@@ -208,7 +211,12 @@ class DropDownButton(ctk.CTkFrame):
                     widget.pack_forget()
                     widget.pack(side=ctk.TOP, anchor=ctk.W, pady=0)
             dp.separator.pack_forget()
-            dp.separator.pack(pady=5)
+
+            if i < len(DropDownButton.dropdowns):
+                if i == len(DropDownButton.dropdowns) - 1:
+                    dp.separator.configure(fg_color=COL_STATUS_OFFLINE_GREY)
+
+                dp.separator.pack(pady=5)
 
     def on_hover(self, _):
         # print("fade in start ")
@@ -302,9 +310,7 @@ class Window:
 
             self.friends_games[friend.get_playing_game()] = friend
 
-
         self.panel_start_x = 0
-        self.panel_start_y = 0
 
         ctk.set_appearance_mode("System")
 
