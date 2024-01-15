@@ -12,31 +12,6 @@ with open('steamid.txt', 'r+') as file:
         steam_id = check[0].strip()
         #print(steam_id)
 
-
-def test_steam_api():
-    player = SteamAPI.Player(SteamAPI.Api.get_player_summary(steam_id))
-    print("name:", player.get_name())
-    print("status:", player.get_status().name)
-    print("game:", player.get_playing_game())
-    print("avatar url:", player.get_avatar(SteamAPI.AvatarFormaat.KLEIN))
-    print('online vrienden')
-
-    prev_online_friends = set()
-    while True:
-
-        player_friends = player.get_friends()
-        current_online_friends = {friend.get_name() for friend in player_friends if friend.get_status() == 1}
-
-        if current_online_friends != prev_online_friends:
-            for friend in current_online_friends:
-                print(f'{friend} is online')
-
-            prev_online_friends = current_online_friends
-
-
-        time.sleep(10)
-        pass
-
 def test_scherm():
     scherm = Window("Steam Train Groep", 500, 500, steam_id)
     scherm.show()
@@ -87,5 +62,4 @@ def test_scherm():
 
 if __name__ == "__main__":
     #test_steamnaam()
-    test_steam_api()
     test_scherm()
