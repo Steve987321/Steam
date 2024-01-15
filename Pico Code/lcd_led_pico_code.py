@@ -1,8 +1,8 @@
 from lcd1602 import LCD
-from machine import *
+from machine import Pin
 import time
 import neopixel
-# 11-1-2024
+# 15-1-2024
 
 
 def steam_uitlezer(steam_vriend_info, blink_notificatie, lijst):
@@ -64,7 +64,7 @@ def pico_main(steam_vriend_online, steam_vriend_offline, steam_vriend_spel):
         Return in principe niks, behalve output uit de pico
     """
 
-    np = neopixel.NeoPixel(machine.Pin(13), 8)  # Pin waar de Neopixel LED mee verbonden is
+    np = neopixel.NeoPixel(Pin(13), 8)  # Pin waar de Neopixel LED mee verbonden is
     lcd = LCD()
     switch_pin = Pin(19, Pin.IN, pull=Pin.PULL_DOWN)  # Pin waar de knop mee verbonden is
 
@@ -132,3 +132,19 @@ def pico_main(steam_vriend_online, steam_vriend_offline, steam_vriend_spel):
                         lcd_writer(regel_1, regel_2, spel_list, lcd)
                     spel_list = []
             time.sleep(0.5)
+
+
+# blijft zoeken voor data van het hoofd script
+while True:
+    # om data vragen
+    data = input()
+    try:
+        raw = eval(data)  # Veranderd de string naar code, aka naar een list met 3 lists erin
+
+        online_list = raw[0]
+        offline_list = raw[1]
+        spel_list = raw[2]
+
+        pico_main(online_list, offline_list, spel_list)
+    except:
+        print("malformed data")
