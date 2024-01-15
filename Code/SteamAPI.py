@@ -149,6 +149,5 @@ class Player:
         try:
             return self.data["gameextrainfo"]
         except KeyError:
-            print("[Player] speler is niet in game")
             return ""
         pass
