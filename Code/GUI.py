@@ -54,35 +54,70 @@ def lerp_color(col1, col2, t):
 
 
 class Tab(ctk.CTkFrame):
-    def __init__(self, master: any, text, tabbar, content: ctk.CTkFrame, command: (), **kwargs):
-        super().__init__(master, **kwargs)
+    def __init__(self, btn_text, tabbar, content: ctk.CTkFrame, **kwargs):
+        super().__init__(tabbar, **kwargs)
 
         self.tabbar = tabbar
-        self.button = ctk.CTkButton(self, text=text, command=command)
+        self.button = ctk.CTkButton(self, text=btn_text, command=self.on_open, width=40)
         self.content = content
-        self.close_button = ctk.CTkButton(self, text='X', command=self.on_close)
+        self.close_button = ctk.CTkButton(self, text='X', command=self.on_close, width=10)
 
     def on_close(self):
-        self.tabbar.remove_tab(self)
+        self.tabbar.remove_tab(self.button.cget("text"))
+
+    def on_open(self):
+        self.tabbar.info.pack_forget()
+        self.tabbar.info.pack(self.content)
+
+    def pack(self):
+        self.button.pack_propagate(False)
+        self.close_button.pack_propagate(False)
+        self.button.pack(side=ctk.LEFT)
+        self.close_button.pack(side=ctk.LEFT)
+        super().pack(side=ctk.LEFT)
 
 
 class TabBar(ctk.CTkFrame):
     def __init__(self, master: any, **kwargs):
         self.tabs = []
+        self.master = master
+        self.info = ctk.CTkScrollableFrame(self.master)
+        ctk.CTkLabel(self.info, text="Druk op een vriend om te starten", text_color=COL_GREY_WIDGET,
+                            font=("Arial", 20)).pack()
         super().__init__(master, **kwargs)
 
     def reset(self):
         for tab in self.tabs:
-            tab.pack(side=ctk.LEFT)
+            tab.pack()
 
     def add_tab(self, tab: Tab):
-        self.tabs.append(tab)
-        self.reset()
+        names = []
+        for t in self.tabs:
+            names.append(t.button.cget("text"))
 
-    def remove_tab(self, tab: Tab):
-        if tab in self.tabs:
-            self.tabs.remove(tab)
+        if tab.button.cget("text") not in names:
+            self.tabs.append(tab)
             self.reset()
+
+    def remove_tab(self, name: str):
+        names = {}
+
+        for tab in self.tabs:
+            names[tab.button.cget("text")] = tab
+
+        if name in names.keys():
+            self.tabs.remove(names[name])
+            self.reset()
+
+    def pack(self):
+        for tab in self.tabs:
+            tab.pack_propagate(False)
+            tab.pack(self, side=ctk.LEFT)
+
+        super().pack_propagate(False)
+        super().pack(anchor=ctk.N, side=ctk.TOP, fill=ctk.X, expand=True)
+        self.info.pack_propagate(False)
+        self.info.pack(side=ctk.TOP, fill=ctk.BOTH, expand=True)
 
 
 class StatistiekWindow:
@@ -109,9 +144,12 @@ class StatistiekWindow:
 class PlayerWidget:
     def __init__(self,
                  player,
-                 master: any,
+                 master,
                  size: tuple[int, int],
+                 window,
                  avatar_formaat: SteamAPI.AvatarFormaat = SteamAPI.AvatarFormaat.KLEIN):
+
+        self.window = window
 
         image_data = requests.get(player.get_avatar(avatar_formaat))
         if not image_data.ok:
@@ -191,10 +229,13 @@ class PlayerWidget:
 
     def on_mouse_leave(self, _):
         self.frame.configure(fg_color="transparent")
-        pass
 
     def on_mouse_press(self, _):
-        pass
+        frame = ctk.CTkFrame(self.window.info_panel_tabbar)
+        ctk.CTkLabel(frame, text=self.name_label.cget("text")).pack()
+
+        tab = Tab(self.name_label.cget("text"), self.window.info_panel_tabbar.info, frame)
+        self.window.info_panel_tabbar.add_tab(tab)
 
     def avatar_click(self, _):
         pass
@@ -374,11 +415,8 @@ class Window:
         self.info_panel = ctk.CTkFrame(self.root, width=self.info_panel_width, fg_color=COL_BG, border_color=COL_BORDER, border_width=0, corner_radius=0)
         self.info_panel_tabbar = TabBar(self.info_panel, height=60, corner_radius=0)
 
-        temp = ctk.CTkLabel(self.info_panel, text="Druk op een vriend om te starten", text_color=COL_GREY_WIDGET, font=("Arial", 20))
         self.info_panel_tabbar.pack_propagate(False)
-        temp.pack_propagate(False)
-        self.info_panel_tabbar.pack(anchor=ctk.N, side=ctk.TOP, fill=ctk.X, expand=True)
-        temp.pack(side=ctk.TOP, fill=ctk.BOTH, expand=True)
+        self.info_panel_tabbar.pack()
 
         header_frame.pack_propagate(False)
         separator.pack_propagate(False)
@@ -387,7 +425,7 @@ class Window:
         self.friends_offline_widgets = []
         self.friends_games_widgets = {}  # game - widget
         for friend in self.friends_online:
-            w = PlayerWidget(friend, friends_frame, (30, 30),
+            w = PlayerWidget(friend, friends_frame, (30, 30), self,
                              SteamAPI.AvatarFormaat.KLEIN)
 
             if friend.get_playing_game() != "":
@@ -400,7 +438,7 @@ class Window:
             self.friends_online_widgets.append(w)
 
         for friend in self.friends_offline:
-            w = PlayerWidget(friend, friends_frame, (30, 30),
+            w = PlayerWidget(friend, friends_frame, (30, 30), self,
                              SteamAPI.AvatarFormaat.KLEIN)
 
             # player is gewoon online zonder een game te spelen
@@ -427,14 +465,14 @@ class Window:
         header_frame.pack(side=ctk.TOP, fill=ctk.X)
         separator.pack(side=ctk.TOP, fill=ctk.X)
 
-        lplayer_avatar = PlayerWidget(self.player, header_frame, (50, 50))
+        lplayer_avatar = PlayerWidget(self.player, header_frame, (50, 50), self)
         lplayer_avatar.pack(side=ctk.TOP, pady=10, padx=5)
         friends_frame.pack(side=ctk.TOP, fill=ctk.BOTH, expand=True)
 
         self.friend_list_panel.pack_propagate(False)
-        self.info_panel.pack_propagate(False)
         self.friend_list_panel.pack(side=ctk.LEFT, fill=ctk.BOTH)
         self.panel_separator.pack(side=ctk.LEFT)
+        self.info_panel_tabbar.pack_propagate(False)
         self.info_panel.pack(side=ctk.LEFT, fill=ctk.BOTH, expand=True)
 
     def panel_separator_mouse_enter(self, _):
