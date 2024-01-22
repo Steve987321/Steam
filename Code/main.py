@@ -55,11 +55,10 @@ def test_Steamapi():
     my_api_instance.test_api()
 
 if __name__ == "__main__":
-    t1 = threading.Thread(target=test_scherm)
     t2 = threading.Thread(target=test_Steamapi)
 
-    t1.start()
     t2.start()
 
-    t1.join()
+    test_scherm()
+
     t2.join()
