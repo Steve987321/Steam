@@ -53,38 +53,6 @@ def lerp_color(col1, col2, t):
     return f"#{r}{g}{b}"
 
 
-class Tab(ctk.CTkFrame):
-    def __init__(self, master: any, text, tabbar, content: ctk.CTkFrame, command: (), **kwargs):
-        super().__init__(master, **kwargs)
-
-        self.tabbar = tabbar
-        self.button = ctk.CTkButton(self, text=text, command=command)
-        self.content = content
-        self.close_button = ctk.CTkButton(self, text='X', command=self.on_close)
-
-    def on_close(self):
-        self.tabbar.remove_tab(self)
-
-
-class TabBar(ctk.CTkFrame):
-    def __init__(self, master: any, **kwargs):
-        self.tabs = []
-        super().__init__(master, **kwargs)
-
-    def reset(self):
-        for tab in self.tabs:
-            tab.pack(side=ctk.LEFT)
-
-    def add_tab(self, tab: Tab):
-        self.tabs.append(tab)
-        self.reset()
-
-    def remove_tab(self, tab: Tab):
-        if tab in self.tabs:
-            self.tabs.remove(tab)
-            self.reset()
-
-
 class StatistiekWindow:
     def __init__(self, window_name: str = "SubWindow", window_size: str = "1080x1440"):
         self.root = ctk.CTkToplevel()
@@ -109,9 +77,12 @@ class StatistiekWindow:
 class PlayerWidget:
     def __init__(self,
                  player,
-                 master: any,
+                 master,
                  size: tuple[int, int],
+                 window,
                  avatar_formaat: SteamAPI.AvatarFormaat = SteamAPI.AvatarFormaat.KLEIN):
+
+        self.window = window
 
         image_data = requests.get(player.get_avatar(avatar_formaat))
         if not image_data.ok:
@@ -140,6 +111,8 @@ class PlayerWidget:
             case _:
                 pass
 
+        self.status_str = status_str
+
         self.frame = ctk.CTkFrame(master, width=1000, height=size[1]+10, fg_color="transparent")
         self.frame.pack_propagate(False)
 
@@ -150,6 +123,21 @@ class PlayerWidget:
         self.name_label = ctk.CTkLabel(self.frame, text=player.get_name(), text_color=status_name_col, font=("Arial", 15), height=0, anchor=ctk.W)
 
         self.status_label = ctk.CTkLabel(self.frame, text=status_str, text_color=status_col, font=("Arial", 12), height=0, anchor=ctk.W)
+
+        self.frame.bind("<Enter>", self.on_mouse_enter)
+        self.frame.bind("<Leave>", self.on_mouse_leave)
+        self.frame.bind("<Button-1>", self.on_mouse_press)
+
+        self.button.bind("<Enter>", self.on_mouse_enter)
+        self.button.bind("<Leave>", self.on_mouse_leave)
+
+        self.status_label.bind("<Enter>", self.on_mouse_enter)
+        self.status_label.bind("<Leave>", self.on_mouse_leave)
+        self.status_label.bind("<Button-1>", self.on_mouse_press)
+
+        self.name_label.bind("<Enter>", self.on_mouse_enter)
+        self.name_label.bind("<Leave>", self.on_mouse_leave)
+        self.name_label.bind("<Button-1>", self.on_mouse_press)
 
         self.name_label.pack_propagate(False)
         self.status_label.pack_propagate(False)
@@ -166,7 +154,25 @@ class PlayerWidget:
     def pack_forget(self):
         self.frame.pack_forget()
 
-    def avatar_click(self):
+    def on_mouse_enter(self, _):
+        if self.status_str.lower() == "online":
+            self.frame.configure(fg_color="#23282F")
+        else:
+            self.frame.configure(fg_color="#0F0F12")
+
+    def on_mouse_leave(self, _):
+        self.frame.configure(fg_color="transparent")
+
+    def on_mouse_press(self, _):
+        self.window.clear_info_panel()
+
+        frame = ctk.CTkFrame(self.window.info_panel, fg_color=COL_BG, border_width=1, border_color=COL_BORDER, corner_radius=0)
+        ctk.CTkButton(frame, text='X', width=25, height=25, command=self.window.reset_info_panel).pack(anchor=ctk.NE)
+        ctk.CTkLabel(frame, text=self.name_label.cget("text")).pack(pady=5, padx=5)
+        frame.pack_propagate(False)
+        frame.pack(expand=True, fill=ctk.BOTH)
+
+    def avatar_click(self, _):
         pass
 
 
@@ -219,7 +225,6 @@ class DropDownButton(ctk.CTkFrame):
                 dp.separator.pack(pady=5)
 
     def on_hover(self, _):
-        # print("fade in start ")
         self.animation_steps = 0
         self.collapse_widget_color = COL_GREY_WIDGET
         self.fade_in()
@@ -300,6 +305,8 @@ class Window:
         self.friends_away = []
         self.friends_games = {}
 
+
+
         for friend in self.friends:
             match friend.get_status():
                 case SteamAPI.PlayerStatus.ONLINE:
@@ -343,12 +350,7 @@ class Window:
         self.panel_separator.bind("<Leave>", self.panel_separator_mouse_leave)
         self.panel_separator.bind("<Motion>", self.panel_separator_mouse_held)
 
-        # ... (rechts) TODO: wat komt hier?
-        self.info_panel = ctk.CTkFrame(self.root, width=self.info_panel_width, fg_color=COL_BG, border_color=COL_BORDER, border_width=1, corner_radius=0)
-        self.info_panel_tabbar = TabBar(self.info_panel)
-        self.info_panel_tabbar
-        temp = ctk.CTkLabel(self.info_panel, text="Druk op een vriend om te starten", text_color=COL_GREY_WIDGET, font=("Arial", 20))
-        temp.pack(anchor=ctk.CENTER, fill=ctk.BOTH, expand=True)
+        self.info_panel = ctk.CTkFrame(self.root, width=self.info_panel_width, fg_color=COL_BG, border_color=COL_BORDER, border_width=0, corner_radius=0)
 
         header_frame.pack_propagate(False)
         separator.pack_propagate(False)
@@ -357,7 +359,7 @@ class Window:
         self.friends_offline_widgets = []
         self.friends_games_widgets = {}  # game - widget
         for friend in self.friends_online:
-            w = PlayerWidget(friend, friends_frame, (30, 30),
+            w = PlayerWidget(friend, friends_frame, (30, 30), self,
                              SteamAPI.AvatarFormaat.KLEIN)
 
             if friend.get_playing_game() != "":
@@ -370,7 +372,7 @@ class Window:
             self.friends_online_widgets.append(w)
 
         for friend in self.friends_offline:
-            w = PlayerWidget(friend, friends_frame, (30, 30),
+            w = PlayerWidget(friend, friends_frame, (30, 30), self,
                              SteamAPI.AvatarFormaat.KLEIN)
 
             # player is gewoon online zonder een game te spelen
@@ -397,26 +399,28 @@ class Window:
         header_frame.pack(side=ctk.TOP, fill=ctk.X)
         separator.pack(side=ctk.TOP, fill=ctk.X)
 
-        lplayer_avatar = PlayerWidget(self.player, header_frame, (50, 50))
+        lplayer_avatar = PlayerWidget(self.player, header_frame, (50, 50), self)
         lplayer_avatar.pack(side=ctk.TOP, pady=10, padx=5)
         friends_frame.pack(side=ctk.TOP, fill=ctk.BOTH, expand=True)
 
         self.friend_list_panel.pack_propagate(False)
-        self.info_panel.pack_propagate(False)
         self.friend_list_panel.pack(side=ctk.LEFT, fill=ctk.BOTH)
         self.panel_separator.pack(side=ctk.LEFT)
         self.info_panel.pack(side=ctk.LEFT, fill=ctk.BOTH, expand=True)
 
-        self.root.after(1_000, self.steam_api_loop)
+        #self.root.after(1_000, self.steam_api_loop)
 
     def panel_separator_mouse_enter(self, _):
+        self.panel_separator.configure(fg_color="#343740")
         self.root.configure(cursor="sb_h_double_arrow")
 
     def panel_separator_mouse_leave(self, _):
+        self.panel_separator.configure(fg_color="#23252A")
         self.root.configure(cursor="")
 
     def panel_separator_mouse_held(self, event):
         try:
+            # muis knoppen
             if event.state == 256 or event.state == 512:
                 if self.panel_start_x == 0:
                     self.panel_start_x = event.x
@@ -438,12 +442,22 @@ class Window:
 
         self.statistiek_window = StatistiekWindow("Statistiek")
 
+    def clear_info_panel(self):
+        for child in self.info_panel.winfo_children():
+            child.destroy()
+
+    def reset_info_panel(self):
+        self.clear_info_panel()
+        ctk.CTkLabel(self.info_panel, text="Klik op een vriend om informatie te tonen").pack(fill=ctk.BOTH, expand=True, padx=5, pady=5)
+
     def button_click(self):
         self.toon_statistiek_window()
 
-    def steam_api_loop(self):
-        SteamAPI.test_steam_api(self.steamid)
-        self.root.after(1_000, self.steam_api_loop)
+    # def steam_api_loop(self):
+    #     SteamAPI.test_steam_api(self.steamid)
+    #     self.root.after(1_000, self.steam_api_loop)
+    #     self.update_friend_data()
+
 
     def show(self):
         self.root.mainloop()

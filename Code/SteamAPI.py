@@ -149,27 +149,55 @@ class Player:
         try:
             return self.data["gameextrainfo"]
         except KeyError:
+            #print("[Player] speler is niet in game")
             return ""
         pass
 
+import time
 
-def test_steam_api(steam_id):
-    player = Player(Api.get_player_summary(steam_id))
-    print("name:", player.get_name())
-    print("status:", player.get_status().name)
-    print("game:", player.get_playing_game())
-    print("avatar url:", player.get_avatar(AvatarFormaat.KLEIN))
-    print('online vrienden')
+import time
 
-    prev_online_friends = set()
+class SteamApi:
+    def __init__(self, steam_id):
+        self.steam_id = steam_id
+        self.prev_online_friends = set()
 
-    player_friends = player.get_friends()
-    current_online_friends = {friend.get_name() for friend in player_friends if friend.get_status() == 1}
+        while True:
+            self.check_and_print_changes()
+            time.sleep(20)  # Adjust the delay time (in seconds) according to your needs
 
-    if current_online_friends != prev_online_friends:
-        for friend in current_online_friends:
-            print(f'{friend} is online')
+    def check_and_print_changes(self):
+        player = Player(Api.get_player_summary(self.steam_id))
+        print("name:", player.get_name())
+        print("status:", player.get_status().name)
+        print("game:", player.get_playing_game())
 
-        prev_online_friends = current_online_friends
+        player_friends = player.get_friends()
+        current_online_friends = {friend.get_name() for friend in player_friends if friend.get_status() == PlayerStatus.ONLINE}
+
+        # Check who went offline
+        went_offline = self.prev_online_friends - current_online_friends
+        if went_offline:
+            print("Players who went offline:")
+            for friend in went_offline:
+                print(f'{friend}')
+
+        # Check who came online
+        came_online = current_online_friends - self.prev_online_friends
+        if came_online:
+            print("Players who came online:")
+            for friend in came_online:
+                print(f'{friend}')
+
+        self.prev_online_friends = current_online_friends
+
+
+
+    def test_api(self):
+
+        pass
+
+
+
 
 
