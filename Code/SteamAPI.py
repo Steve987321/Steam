@@ -153,9 +153,6 @@ class Player:
             return ""
         pass
 
-import time
-
-import time
 
 class SteamApi:
     def __init__(self, steam_id):
@@ -190,14 +187,3 @@ class SteamApi:
                 print(f'{friend}')
 
         self.prev_online_friends = current_online_friends
-
-
-
-    def test_api(self):
-
-        pass
-
-
-
-
-
