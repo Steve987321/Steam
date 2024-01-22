@@ -53,73 +53,6 @@ def lerp_color(col1, col2, t):
     return f"#{r}{g}{b}"
 
 
-class Tab(ctk.CTkFrame):
-    def __init__(self, btn_text, tabbar, content: ctk.CTkFrame, **kwargs):
-        super().__init__(tabbar, **kwargs)
-
-        self.tabbar = tabbar
-        self.button = ctk.CTkButton(self, text=btn_text, command=self.on_open, width=40)
-        self.content = content
-        self.close_button = ctk.CTkButton(self, text='X', command=self.on_close, width=10)
-
-    def on_close(self):
-        self.tabbar.remove_tab(self.button.cget("text"))
-
-    def on_open(self):
-        self.tabbar.info.pack_forget()
-        self.tabbar.info.pack(self.content)
-
-    def pack(self):
-        self.button.pack_propagate(False)
-        self.close_button.pack_propagate(False)
-        self.button.pack(side=ctk.LEFT)
-        self.close_button.pack(side=ctk.LEFT)
-        super().pack(side=ctk.LEFT)
-
-
-class TabBar(ctk.CTkFrame):
-    def __init__(self, master: any, **kwargs):
-        self.tabs = []
-        self.master = master
-        self.info = ctk.CTkScrollableFrame(self.master)
-        ctk.CTkLabel(self.info, text="Druk op een vriend om te starten", text_color=COL_GREY_WIDGET,
-                            font=("Arial", 20)).pack()
-        super().__init__(master, **kwargs)
-
-    def reset(self):
-        for tab in self.tabs:
-            tab.pack()
-
-    def add_tab(self, tab: Tab):
-        names = []
-        for t in self.tabs:
-            names.append(t.button.cget("text"))
-
-        if tab.button.cget("text") not in names:
-            self.tabs.append(tab)
-            self.reset()
-
-    def remove_tab(self, name: str):
-        names = {}
-
-        for tab in self.tabs:
-            names[tab.button.cget("text")] = tab
-
-        if name in names.keys():
-            self.tabs.remove(names[name])
-            self.reset()
-
-    def pack(self):
-        for tab in self.tabs:
-            tab.pack_propagate(False)
-            tab.pack(self, side=ctk.LEFT)
-
-        super().pack_propagate(False)
-        super().pack(anchor=ctk.N, side=ctk.TOP, fill=ctk.X, expand=True)
-        self.info.pack_propagate(False)
-        self.info.pack(side=ctk.TOP, fill=ctk.BOTH, expand=True)
-
-
 class StatistiekWindow:
     def __init__(self, window_name: str = "SubWindow", window_size: str = "1080x1440"):
         self.root = ctk.CTkToplevel()
@@ -231,11 +164,13 @@ class PlayerWidget:
         self.frame.configure(fg_color="transparent")
 
     def on_mouse_press(self, _):
-        frame = ctk.CTkFrame(self.window.info_panel_tabbar)
-        ctk.CTkLabel(frame, text=self.name_label.cget("text")).pack()
+        self.window.clear_info_panel()
 
-        tab = Tab(self.name_label.cget("text"), self.window.info_panel_tabbar.info, frame)
-        self.window.info_panel_tabbar.add_tab(tab)
+        frame = ctk.CTkFrame(self.window.info_panel, fg_color=COL_BG, border_width=1, border_color=COL_BORDER, corner_radius=0)
+        ctk.CTkButton(frame, text='X', width=25, height=25, command=self.window.reset_info_panel).pack(anchor=ctk.NE)
+        ctk.CTkLabel(frame, text=self.name_label.cget("text")).pack(pady=5, padx=5)
+        frame.pack_propagate(False)
+        frame.pack(expand=True, fill=ctk.BOTH)
 
     def avatar_click(self, _):
         pass
@@ -413,10 +348,6 @@ class Window:
         self.panel_separator.bind("<Motion>", self.panel_separator_mouse_held)
 
         self.info_panel = ctk.CTkFrame(self.root, width=self.info_panel_width, fg_color=COL_BG, border_color=COL_BORDER, border_width=0, corner_radius=0)
-        self.info_panel_tabbar = TabBar(self.info_panel, height=60, corner_radius=0)
-
-        self.info_panel_tabbar.pack_propagate(False)
-        self.info_panel_tabbar.pack()
 
         header_frame.pack_propagate(False)
         separator.pack_propagate(False)
@@ -472,7 +403,6 @@ class Window:
         self.friend_list_panel.pack_propagate(False)
         self.friend_list_panel.pack(side=ctk.LEFT, fill=ctk.BOTH)
         self.panel_separator.pack(side=ctk.LEFT)
-        self.info_panel_tabbar.pack_propagate(False)
         self.info_panel.pack(side=ctk.LEFT, fill=ctk.BOTH, expand=True)
 
     def panel_separator_mouse_enter(self, _):
@@ -506,6 +436,14 @@ class Window:
                 return
 
         self.statistiek_window = StatistiekWindow("Statistiek")
+
+    def clear_info_panel(self):
+        for child in self.info_panel.winfo_children():
+            child.destroy()
+
+    def reset_info_panel(self):
+        self.clear_info_panel()
+        ctk.CTkLabel(self.info_panel, text="Klik op een vriend om informatie te tonen").pack(fill=ctk.BOTH, expand=True, padx=5, pady=5)
 
     def button_click(self):
         self.toon_statistiek_window()
