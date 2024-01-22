@@ -295,7 +295,8 @@ class SeparatorLineV(ctk.CTkFrame):
 
 class Window:
     def __init__(self, naam: str, win_width: int, win_height: int, steamid: str):
-        self.player = SteamAPI.Player(SteamAPI.Api.get_player_summary(steamid))
+        self.steamid = steamid
+        self.player = SteamAPI.Player(SteamAPI.Api.get_player_summary(self.steamid))
         self.player_name = self.player.get_name()
 
         self.friends = self.player.get_friends()
@@ -303,6 +304,8 @@ class Window:
         self.friends_offline = []
         self.friends_away = []
         self.friends_games = {}
+
+
 
         for friend in self.friends:
             match friend.get_status():
@@ -405,6 +408,8 @@ class Window:
         self.panel_separator.pack(side=ctk.LEFT)
         self.info_panel.pack(side=ctk.LEFT, fill=ctk.BOTH, expand=True)
 
+        #self.root.after(1_000, self.steam_api_loop)
+
     def panel_separator_mouse_enter(self, _):
         self.panel_separator.configure(fg_color="#343740")
         self.root.configure(cursor="sb_h_double_arrow")
@@ -447,6 +452,12 @@ class Window:
 
     def button_click(self):
         self.toon_statistiek_window()
+
+    # def steam_api_loop(self):
+    #     SteamAPI.test_steam_api(self.steamid)
+    #     self.root.after(1_000, self.steam_api_loop)
+    #     self.update_friend_data()
+
 
     def show(self):
         self.root.mainloop()

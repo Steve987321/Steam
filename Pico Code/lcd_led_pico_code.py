@@ -1,8 +1,8 @@
 from lcd1602 import LCD
-from machine import *
+from machine import Pin
 import time
 import neopixel
-# Hell yeah
+# 15-1-2024
 
 
 def steam_uitlezer(steam_vriend_info, blink_notificatie, lijst):
@@ -64,14 +64,14 @@ def pico_main(steam_vriend_online, steam_vriend_offline, steam_vriend_spel):
         Return in principe niks, behalve output uit de pico
     """
 
-    np = neopixel.NeoPixel(machine.Pin(13), 8)  # Pin waar de Neopixel LED mee verbonden is
+    np = neopixel.NeoPixel(Pin(13), 8)  # Pin waar de Neopixel LED mee verbonden is
     lcd = LCD()
     switch_pin = Pin(19, Pin.IN, pull=Pin.PULL_DOWN)  # Pin waar de knop mee verbonden is
 
     np[0] = [0, 255, 0]  # Maakt het eerste lampje groen om mee te beginnen
     np.write()
 
-    online_list = []   # Deze 3 lijsten worden gebruikt om steam info in op te slaan totdat deze worden ge-displayed op
+    online_list = []  # Deze 3 lijsten worden gebruikt om steam info in op te slaan totdat deze worden ge-displayed op
     offline_list = []  # het LCD scherm
     spel_list = []
 
@@ -95,14 +95,17 @@ def pico_main(steam_vriend_online, steam_vriend_offline, steam_vriend_spel):
             np[0] = geel  # Maakt het eerste lampje geel om aan te tonen dat er nieuwe informatie beschikbaar is
             np.write()
 
-            blink_notificatie_online, steam_vriend_online = blink_handler(blink_notificatie_online, steam_vriend_online,
-                                                                          groen, np)
-
-            blink_notificatie_offline, steam_vriend_offline = blink_handler(blink_notificatie_offline,
-                                                                            steam_vriend_offline, rood, np)
-
-            blink_notificatie_spel, steam_vriend_spel = blink_handler(blink_notificatie_spel, steam_vriend_spel, blauw,
-                                                                      np)
+            if not len(steam_vriend_online) == 0:
+                blink_notificatie_online, steam_vriend_online = blink_handler(blink_notificatie_online,
+                                                                              steam_vriend_online,
+                                                                              groen, np)
+            if not len(steam_vriend_offline) == 0:
+                blink_notificatie_offline, steam_vriend_offline = blink_handler(blink_notificatie_offline,
+                                                                                steam_vriend_offline, rood, np)
+            if not len(steam_vriend_spel) == 0:
+                blink_notificatie_spel, steam_vriend_spel = blink_handler(blink_notificatie_spel, steam_vriend_spel,
+                                                                          blauw,
+                                                                          np)
 
         if len(online_list) == 0 and len(offline_list) == 0 and len(spel_list) == 0:
             np[0] = groen  # Maakt het lampje weer groen zodra er geen informatie beschikbaar is
@@ -127,15 +130,21 @@ def pico_main(steam_vriend_online, steam_vriend_offline, steam_vriend_spel):
                         regel_1 = f"{naam} speelt:"
                         regel_2 = f"{spel}"
                         lcd_writer(regel_1, regel_2, spel_list, lcd)
-                        print(spel_list)
-                        print(len(spel_list))
                     spel_list = []
             time.sleep(0.5)
 
 
-#test_steam_vriend_online = ["test", "whatdafuck"]
-#test_steam_vriend_offline = ["test2"]
-#test_steam_vriend_spel = ["Damian;THE FINALS", "Duncan;test"]
+# blijft zoeken voor data van het hoofd script
+while True:
+    # om data vragen
+    data = input()
+    try:
+        raw = eval(data)  # Veranderd de string naar code, aka naar een list met 3 lists erin
 
-pico_main(test_steam_vriend_online, test_steam_vriend_offline, test_steam_vriend_spel)
+        online_list = raw[0]
+        offline_list = raw[1]
+        spel_list = raw[2]
 
+        pico_main(online_list, offline_list, spel_list)
+    except:
+        print("malformed data")

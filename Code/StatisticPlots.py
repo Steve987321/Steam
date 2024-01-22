@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 from collections import Counter
+import statistics as st
 import json
 
 # READ ME: If you want these to run download pandas and matplotlib. Also you have to change the test.json to steam.json.
@@ -39,7 +40,7 @@ def plot1():
     cols = ['price', 'average_playtime']
     data = []
 
-    with open("test.json") as f:
+    with open("steam.json") as f:
         doc = json.load(f)
         for line in doc:
             lst = [line['price'], line['average_playtime'] / 60]
@@ -62,7 +63,7 @@ def plot2():
     cols = ['price', 'count']
     data = []
 
-    with open("test.json") as f:
+    with open("steam.json") as f:
         doc = json.load(f)
         for line in doc:
             data.append(line['price'])
@@ -71,11 +72,64 @@ def plot2():
     s = pd.Series(counted, name="count")
     s.index.name = "price"
     s = s.reset_index()
-    print(s)
+
     X = s.iloc[:, 0]
     Y = s.iloc[:, 1]
 
     plt.bar(X, Y)
     plt.xlim(0, 30)
+    plt.title("How many games have the same price?")
+    plt.xlabel("Price")
+    plt.ylabel("Count")
     plt.show()
+
+
+def avg_price(loaded_json):
+    avg = st.mean(list(i["price"] for i in loaded_json))
+    return round(avg, 2)
+
+
+def avg_playtime(loaded_json):
+    avg = st.mean(list(i["average_playtime"] for i in loaded_json))
+    return round(avg)
+
+
+def min_to_hours(minutes):
+    return round(minutes / 60)
+
+
+def avg_positive(loaded_json):
+    avg = st.mean(list(i["positive_ratings"] for i in loaded_json))
+    return round(avg)
+
+
+def most_expensive_game(loaded_json):
+    game = max(loaded_json, key=lambda a: a["price"])
+    return game["price"], game["name"]
+
+
+def amountOfGames(loaded_json):
+    return len(loaded_json)
+
+
+def main():
+    with open("steam.json") as file:
+        rjson = file.read()
+        loaded_json = json.loads(rjson)
+
+        avg = avg_playtime(loaded_json)
+        biggest, name = most_expensive_game(loaded_json)
+        print(f"\x1b[32mAverage price: {avg_price(loaded_json)}")
+        print(f"Average playtime: {avg} minutes")
+        print(f"Average playtime: {min_to_hours(avg)} hours")
+        print(f"Average positive reviews: {avg_positive(loaded_json)}")
+        print(f"Most expensive game belongs to: \x1b[31m{name}\x1b[32m with a price of ${biggest}")
+        print(f"There are {amountOfGames(loaded_json)} games on steam")
+
+
+if __name__ == '__main__':
+    main()
+    plot1()
+    plot2()
+
 
