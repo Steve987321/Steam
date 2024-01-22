@@ -36,7 +36,6 @@ def plot1():
         Y_pred = a * X + b
         return Y_pred, X, Y
 
-    import json
     cols = ['price', 'average_playtime']
     data = []
 
