@@ -3,9 +3,7 @@ import tkinter
 
 import customtkinter as ctk
 import SteamAPI
-import requests
 from PIL import Image
-from io import BytesIO
 import sys
 
 from dataclasses import dataclass
@@ -78,6 +76,9 @@ class StatistiekWindow:
 
 
 class PlayerWidget:
+
+    instances = []
+
     def __init__(self,
                  player,
                  master,
@@ -85,27 +86,27 @@ class PlayerWidget:
                  window,
                  avatar_formaat: SteamAPI.AvatarFormaat = SteamAPI.AvatarFormaat.KLEIN):
 
+        PlayerWidget.instances.append(self)
         self.window = window
         self.player_name = None
         self.player_status = SteamAPI.PlayerStatus.INVALID
+        self.player_id = player.get_id()
+        self.size = size
+        self.has_valid_image = False
 
         if player is None:
-            image = Image.new(mode="RGB", size=size)
-            image_widget = ctk.CTkImage(size=size, dark_image=image)
             status_str = "Invalid"
             self.player_status = SteamAPI.PlayerStatus.INVALID
             self.player_name = "-"
         else:
-            image_data = requests.get(player.get_avatar(avatar_formaat))
-            if not image_data.ok:
-                print("[GUI] AvatarWidget image_data kon niet worden opgehaald")
-            image = Image.open(BytesIO(image_data.content))
-            resized_image = image.resize(size, Image.Resampling.LANCZOS)
-            image_widget = ctk.CTkImage(dark_image=resized_image, size=size)
             self.player_status = player.get_status()
             status_str = self.player_status.name.lower()
             status_str = status_str.replace(status_str[0], status_str[0].upper(), 1)
             self.player_name = player.get_name()
+
+        image = Image.new(mode="RGB", size=size)
+        image = image.resize(size, Image.Resampling.LANCZOS)
+        image_widget = ctk.CTkImage(size=size, dark_image=image)
 
         status_col = COL_DARK_BLUE
         status_name_col = COL_LIGHT_BLUE
@@ -363,6 +364,8 @@ class Window:
         self.steamAPIThread.on_friend_list_change = self.on_fl_change
         self.steamAPIThread.on_steamid_status_change = self.on_player_change
 
+        self.image_thread = SteamAPI.AvatarLoadThread({})
+
         self.panel_start_x = 0
 
         ctk.set_appearance_mode("System")
@@ -416,7 +419,6 @@ class Window:
 
     def on_fl_change(self, changed_friends):
         self.update_drop_downs(changed_friends)
-        DropDownButton.reset()
 
     def show_widgets(self):
         self.header_frame.pack_propagate(False)
@@ -435,10 +437,21 @@ class Window:
 
     def check_update(self):
         if not self.steamAPIThread.has_data:
-            self.root.after(500, self.check_update)
+            if len(self.steamAPIThread.friends) > 0 and self.steamAPIThread.player is not None:
+                if not self.image_thread.is_alive():
+                    for friend in self.steamAPIThread.friends:
+                        self.image_thread.avatars[friend] = None
+
+                    self.image_thread.avatars[self.steamAPIThread.player] = None
+
+                    self.image_thread.start()
+
+            self.root.after(100, self.check_update)
         else:
             self.progress_bar.destroy()
             self.show_widgets()
+            DropDownButton.reset()
+            self.check_images()
 
     def update_drop_downs(self, changed_players: list[SteamAPI.Player]):
         d = {}
@@ -576,6 +589,28 @@ class Window:
         ctk.CTkLabel(self.vriend_info, text="Klik op een vriend om informatie te tonen").pack(fill=ctk.BOTH,
                                                                                               expand=True, padx=5,
                                                                                               pady=5)
+
+    def check_images(self):
+        if not self.image_thread.is_alive():
+            if len(self.image_thread.avatars) == 0 or None in self.image_thread.avatars.values():
+                self.image_thread.start()
+
+        recheck = False
+        for widget in PlayerWidget.instances:
+            for player, img in self.image_thread.avatars.items():
+                if img is None:
+                    recheck = True
+                else:
+                    if widget.player_id == player.get_id():
+                        widget.button.configure(
+                            image=ctk.CTkImage(
+                                dark_image=self.image_thread.avatars[player],
+                                size=widget.size
+                            )
+                        )
+
+        if recheck:
+            self.root.after(500, self.check_images)
 
     def show(self):
         self.root.mainloop()

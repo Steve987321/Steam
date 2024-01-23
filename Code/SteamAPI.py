@@ -1,6 +1,8 @@
 import requests
 import json
 import time
+from PIL import Image
+from io import BytesIO
 from enum import IntEnum
 import threading
 
@@ -79,6 +81,8 @@ class Player:
         else:
             self.data = player_data["response"]["players"][0]
 
+        self.avatar = None
+
     def get_id(self) -> str:
         try:
             return self.data["steamid"]
@@ -124,35 +128,73 @@ class Player:
 
         pass
 
-    def get_avatar(self, formaat: AvatarFormaat) -> str:
-        """Geeft url van avatar"""
+    def get_avatar(self, formaat: AvatarFormaat = AvatarFormaat.MIDDEL) -> Image:
+        """Geeft Image van avatar"""
+        if self.avatar is not None:
+            return self.avatar
+
+        url = None
+
         try:
             match formaat:
                 case AvatarFormaat.KLEIN:
-                    return self.data["avatar"]
+                    url = self.data["avatar"]
                 case AvatarFormaat.MIDDEL:
-                    return self.data["avatarmedium"]
+                    url = self.data["avatarmedium"]
                 case AvatarFormaat.GROOT:
-                    return self.data["avatarfull"]
+                    url = self.data["avatarfull"]
                 case _:
                     opties = []
                     for f in AvatarFormaat:
                         opties.append(f.value)
                     print("[Player] geen geldige avatar formaat, kies uit: ", opties)
-                    return ""
-
+                    return None
         except KeyError as e:
             print(f"[Player] avatar kan niet worden gevonden: {e}")
             return ""
+        image_data = requests.get(url)
+        if not image_data.ok:
+            print("[Player] image data kon niet worden opgehaald")
+            return None
+
+        self.avatar = Image.open(BytesIO(image_data.content))
+        return self.avatar
 
     def get_playing_game(self) -> str:
         """Geeft naam van game die wordt gespeeld"""
         try:
             return self.data["gameextrainfo"]
         except KeyError:
-            #print("[Player] speler is niet in game")
             return ""
         pass
+
+
+class AvatarLoadThread:
+    def __init__(self, avatars: dict):
+        self.avatars = avatars
+        self.thread = None
+
+    def start(self):
+        if self.thread is not None and self.thread.is_alive():
+            return
+        self.thread = threading.Thread(target=self.update)
+        self.thread.start()
+
+    def join(self):
+        self.thread.join()
+
+    def is_alive(self):
+        if self.thread is None:
+            return False
+
+        return self.thread.is_alive()
+
+    def update(self):
+        for player, image in self.avatars.copy().items():
+            if image is not None:
+                continue
+            image = player.get_avatar(AvatarFormaat.MIDDEL)
+            self.avatars[player] = image
 
 
 class SteamApiThread:
@@ -165,6 +207,7 @@ class SteamApiThread:
         self.on_friend_list_change = None
         self.on_steamid_status_change = None
         self.stop = False
+        self.once = False
 
         self.player = None
         self.friends = []
@@ -201,9 +244,10 @@ class SteamApiThread:
                 self.friends_games[friend.get_playing_game()] = friend
 
             self.friends_online += self.friends_away
+            self.on_friend_list_change(self.friends + [self.player])
+            self.has_data = True
 
             self.check_changes()
-            self.has_data = True
 
             time.sleep(5)  # Adjust the delay time (in seconds) according to your needs
 
