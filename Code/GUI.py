@@ -213,7 +213,11 @@ class PlayerWidget:
     def on_mouse_press(self, _):
         self.window.clear_info_panel()
 
-        frame = ctk.CTkFrame(self.window.vriend_info, fg_color=COL_BG, border_width=1, border_color=COL_BORDER,
+        border_kleur = COL_BORDER
+        if self.player_status == SteamAPI.PlayerStatus.OFFLINE:
+            border_kleur = COL_GREY_WIDGET
+
+        frame = ctk.CTkFrame(self.window.vriend_info, fg_color=COL_BG, border_width=1, border_color=border_kleur,
                              corner_radius=0)
         ctk.CTkButton(frame, text='X', width=25, height=25, command=self.window.reset_info_panel,
                       text_color=COL_LABEL, hover_color=COL_BG, fg_color=COL_BG).pack(anchor=ctk.NE, padx=2, pady=2)
