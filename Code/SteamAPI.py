@@ -211,6 +211,9 @@ class SteamApiThread:
         player = Player(Api.get_player_summary(self.steam_id))
         status = player.get_status()
         game = player.get_playing_game()
+        changed_player_list = []
+        friend_status = {}
+        changed = False
 
         if status != self.prev_steamid_status or game != self.prev_steamid_game:
             self.on_steamid_status_change(status, game)
@@ -218,15 +221,19 @@ class SteamApiThread:
         self.prev_steamid_status = status
         self.prev_steamid_game = game
 
-        friend_status = {}
         for friend in player.get_friends():
             if friend.get_name() in self.prev_friends_status.keys():
                 if self.prev_friends_status[friend.get_name()] != friend.get_status():
-                    self.on_friend_list_change(friend)
+                    changed_player_list.append(friend)
+                    changed = True
 
             friend_status[friend.get_name()] = friend.get_status()
 
         if len(self.prev_friends_status) == 0 and len(friend_status) > 0:
-            self.on_friend_list_change(None)
+            changed_player_list = player.get_friends()
+            changed = True
+
+        if changed:
+            self.on_friend_list_change(changed_player_list)
 
         self.prev_friends_status = friend_status
