@@ -215,7 +215,8 @@ class PlayerWidget:
 
         frame = ctk.CTkFrame(self.window.vriend_info, fg_color=COL_BG, border_width=1, border_color=COL_BORDER,
                              corner_radius=0)
-        ctk.CTkButton(frame, text='X', width=25, height=25, command=self.window.reset_info_panel).pack(anchor=ctk.NE)
+        ctk.CTkButton(frame, text='X', width=25, height=25, command=self.window.reset_info_panel,
+                      text_color=COL_LABEL, hover_color=COL_BG, fg_color=COL_BG).pack(anchor=ctk.NE, padx=2, pady=2)
         ctk.CTkLabel(frame, text=self.name_label.cget("text")).pack(pady=5, padx=5)
         frame.pack_propagate(False)
         frame.pack(expand=True, fill=ctk.BOTH)
