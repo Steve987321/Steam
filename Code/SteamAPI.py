@@ -2,6 +2,7 @@ import requests
 import json
 import time
 from enum import IntEnum
+import threading
 
 
 class PlayerStatus(IntEnum):
@@ -154,36 +155,78 @@ class Player:
         pass
 
 
-class SteamApi:
+class SteamApiThread:
     def __init__(self, steam_id):
+        self.has_data = False
         self.steam_id = steam_id
-        self.prev_online_friends = set()
+        self.prev_friends_status = {}
+        self.prev_steamid_status = PlayerStatus.INVALID
+        self.prev_steamid_game = None
+        self.on_friend_list_change = None
+        self.on_steamid_status_change = None
+        self.stop = False
 
-        while True:
-            self.check_and_print_changes()
-            time.sleep(20)  # Adjust the delay time (in seconds) according to your needs
+        self.player = None
+        self.friends = []
+        self.friends_online = []
+        self.friends_offline = []
+        self.friends_away = []
+        self.friends_games = {}
 
-    def check_and_print_changes(self):
+        self.thread = threading.Thread(target=self.update)
+        self.thread.start()
+
+    def stop_thread(self):
+        self.stop = True
+        self.thread.join()
+
+    def update(self):
+        while not self.stop:
+            self.player = Player(Api.get_player_summary(self.steam_id))
+            self.friends = self.player.get_friends()
+
+            self.friends_online.clear()
+            self.friends_offline.clear()
+            self.friends_away.clear()
+
+            for friend in self.friends:
+                match friend.get_status():
+                    case PlayerStatus.ONLINE:
+                        self.friends_online.append(friend)
+                    case PlayerStatus.OFFLINE:
+                        self.friends_offline.append(friend)
+                    case PlayerStatus.AWAY:
+                        self.friends_away.append(friend)
+
+                self.friends_games[friend.get_playing_game()] = friend
+
+            self.friends_online += self.friends_away
+
+            self.check_changes()
+            self.has_data = True
+
+            time.sleep(5)  # Adjust the delay time (in seconds) according to your needs
+
+    def check_changes(self):
         player = Player(Api.get_player_summary(self.steam_id))
-        print("name:", player.get_name())
-        print("status:", player.get_status().name)
-        print("game:", player.get_playing_game())
+        status = player.get_status()
+        game = player.get_playing_game()
 
-        player_friends = player.get_friends()
-        current_online_friends = {friend.get_name() for friend in player_friends if friend.get_status() == PlayerStatus.ONLINE}
+        if status != self.prev_steamid_status or game != self.prev_steamid_game:
+            self.on_steamid_status_change(status, game)
 
-        # Check who went offline
-        went_offline = self.prev_online_friends - current_online_friends
-        if went_offline:
-            print("Players who went offline:")
-            for friend in went_offline:
-                print(f'{friend}')
+        self.prev_steamid_status = status
+        self.prev_steamid_game = game
 
-        # Check who came online
-        came_online = current_online_friends - self.prev_online_friends
-        if came_online:
-            print("Players who came online:")
-            for friend in came_online:
-                print(f'{friend}')
+        friend_status = {}
+        for friend in player.get_friends():
+            if friend.get_name() in self.prev_friends_status.keys():
+                if self.prev_friends_status[friend.get_name()] != friend.get_status():
+                    self.on_friend_list_change(friend)
 
-        self.prev_online_friends = current_online_friends
+            friend_status[friend.get_name()] = friend.get_status()
+
+        if len(self.prev_friends_status) == 0 and len(friend_status) > 0:
+            self.on_friend_list_change(None)
+
+        self.prev_friends_status = friend_status

@@ -46,19 +46,11 @@ with open('steamid.txt', 'r+') as file:
         steam_id = check[0].strip()
         # print(steam_id)
 
-def test_scherm():
-    scherm = Window("Steam Train Groep", 500, 500, steam_id)
-    scherm.show()
-
 def test_Steamapi():
-    my_api_instance = SteamAPI.SteamApi(steam_id)
+    my_api_instance = SteamAPI.SteamApiThread(steam_id)
     my_api_instance.test_api()
 
 if __name__ == "__main__":
-    t2 = threading.Thread(target=test_Steamapi)
-
-    t2.start()
-
-    test_scherm()
-
-    t2.join()
+    scherm = Window("Steam Train Groep", 500, 500, steam_id)
+    scherm.show()
+    scherm.steamAPIThread.stop_thread()
