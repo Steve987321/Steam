@@ -231,7 +231,7 @@ class SteamApiThread:
         self.thread.start()
         self.prev_online_friends = set()
         self.processed_game_ids = set()
-
+        self.get_games(KEY,steam_id)
 
     # def player_Achievement(self):
     #     print(Api.get_player_summary(self.steam_id))
@@ -299,54 +299,52 @@ class SteamApiThread:
         if changed:
             self.on_friend_list_change(changed_player_list)
 
-    import requests
 
+    def get_games(self, api_key, steam_id):
+        url = 'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/'
+        params = {
+            'key': api_key,
+            'steamid': steam_id,
+        }
+        response = requests.get(url, params=params)
+        if response.status_code == 200:
+            data = response.json()
+            games = data.get('response', {}).get('games', [])
+            app_ids = [game.get('appid') for game in games]
+            print(app_ids)
+            return self.get_game_names(app_ids)
+        else:
+            print(f"Error: {response.status_code}, {response.text}")
+            return []
 
+    def get_game_names(self, app_ids):
+        base_url = "https://store.steampowered.com/api/appdetails/"
 
-    #  def get_games(self, api_key, steam_id):
-    #     url = 'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/'
-    #     params = {
-    #         'key': api_key,
-    #         'steamid': steam_id,
-    #     }
-    #     response = requests.get(url, params=params)
-    #     if response.status_code == 200:
-    #         data = response.json()
-    #         games = data.get('response', {}).get('games', [])
-    #         app_ids = [game.get('appid') for game in games]
-    #         print(app_ids)
-    #         return app_ids
-    #     else:
-    #         print(f"Error: {response.status_code}, {response.text}")
-    #         return []
-    #
-    # def get_game_names(self, app_ids):
-    #     base_url = "https://store.steampowered.com/api/appdetails/"
-    #
-    #     game_names = []
-    #
-    #     for app_id in app_ids:
-    #         if app_id in self.processed_game_ids:
-    #             continue
-    #
-    #         url = f"{base_url}?appids={app_id}"
-    #         response = requests.get(url)
-    #
-    #         if response.status_code == 200:
-    #             data = response.json()
-    #             if data.get(str(app_id), {}).get("success", False):
-    #                 game_name = data[str(app_id)]["data"]["name"]
-    #                 game_names.append({"app_id": app_id, "game_name": game_name})
-    #                 self.processed_game_ids.add(app_id)
-    #             else:
-    #                 print(f"Error: Game ID {app_id} not found")
-    #         else:
-    #             print(f"Error: Unable to retrieve data for Game ID {app_id}")
-    #
-    #     for game_info in game_names:
-    #         print(f"Game ID: {game_info['app_id']}, Game Name: {game_info['game_name']}")
-    #
-    #     return game_names
+        game_names = []
+
+        for app_id in app_ids:
+            if app_id in self.processed_game_ids:
+                continue
+
+            url = f"{base_url}?appids={app_id}"
+            response = requests.get(url)
+
+            if response.status_code == 200:
+                data = response.json()
+                if data.get(str(app_id), {}).get("success", False):
+                    game_name = data[str(app_id)]["data"]["name"]
+                    game_names.append({"app_id": app_id, "game_name": game_name})
+                    self.processed_game_ids.add(app_id)
+                else:
+                    print(f"Error: Game ID {app_id} not found")
+            else:
+                print(f"Error: Unable to retrieve data for Game ID {app_id}")
+
+        for game_info in game_names:
+            print(f"Game ID: {game_info['app_id']}, Game Name: {game_info['game_name']}")
+
+        return game_names
+
 
 
 
