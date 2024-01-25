@@ -100,6 +100,9 @@ def pico_main(st_online_lst, st_offline_lst, st_game_lst, online_lst_cpy, offlin
                         lcd_writer(regel_1, regel_2, game_lst_cpy, lcd)
                     game_lst_cpy = []
             time.sleep(0.5)
+    if len(online_lst_cpy) == 0 and len(offline_lst_cpy) == 0 and len(game_lst_cpy) == 0:
+        np[0] = groen  # Maakt het lampje weer groen zodra er geen informatie beschikbaar is
+        np.write()
     return online_lst_cpy, offline_lst_cpy, game_lst_cpy
 
 
@@ -115,4 +118,3 @@ while True:
     vriend_offline_list = raw[1]
     vriend_speelt__list = raw[2]
     pico_main(vriend_online__list, vriend_offline_list, vriend_speelt__list, online, offline, spel)
-
