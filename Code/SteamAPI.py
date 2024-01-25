@@ -1,7 +1,10 @@
 import requests
 import json
 import time
+from PIL import Image
+from io import BytesIO
 from enum import IntEnum
+import threading
 
 
 class PlayerStatus(IntEnum):
@@ -78,6 +81,8 @@ class Player:
         else:
             self.data = player_data["response"]["players"][0]
 
+        self.avatar = None
+
     def get_id(self) -> str:
         try:
             return self.data["steamid"]
@@ -123,26 +128,37 @@ class Player:
 
         pass
 
-    def get_avatar(self, formaat: AvatarFormaat) -> str:
-        """Geeft url van avatar"""
+    def get_avatar(self, formaat: AvatarFormaat = AvatarFormaat.MIDDEL) -> Image:
+        """Geeft Image van avatar"""
+        if self.avatar is not None:
+            return self.avatar
+
+        url = None
+
         try:
             match formaat:
                 case AvatarFormaat.KLEIN:
-                    return self.data["avatar"]
+                    url = self.data["avatar"]
                 case AvatarFormaat.MIDDEL:
-                    return self.data["avatarmedium"]
+                    url = self.data["avatarmedium"]
                 case AvatarFormaat.GROOT:
-                    return self.data["avatarfull"]
+                    url = self.data["avatarfull"]
                 case _:
                     opties = []
                     for f in AvatarFormaat:
                         opties.append(f.value)
                     print("[Player] geen geldige avatar formaat, kies uit: ", opties)
-                    return ""
-
+                    return None
         except KeyError as e:
             print(f"[Player] avatar kan niet worden gevonden: {e}")
             return ""
+        image_data = requests.get(url)
+        if not image_data.ok:
+            print("[Player] image data kon niet worden opgehaald")
+            return None
+
+        self.avatar = Image.open(BytesIO(image_data.content))
+        return self.avatar
 
     def get_playing_game(self) -> str:
         """Geeft naam van game die wordt gespeeld"""
@@ -151,3 +167,117 @@ class Player:
         except KeyError:
             return ""
         pass
+
+
+class AvatarLoadThread:
+    def __init__(self, avatars: dict):
+        self.avatars = avatars
+        self.thread = None
+
+    def start(self):
+        if self.thread is not None and self.thread.is_alive():
+            return
+        self.thread = threading.Thread(target=self.update)
+        self.thread.start()
+
+    def join(self):
+        self.thread.join()
+
+    def is_alive(self):
+        if self.thread is None:
+            return False
+
+        return self.thread.is_alive()
+
+    def update(self):
+        for player, image in self.avatars.copy().items():
+            if image is not None:
+                continue
+            image = player.get_avatar(AvatarFormaat.MIDDEL)
+            self.avatars[player] = image
+
+
+class SteamApiThread:
+    def __init__(self, steam_id):
+        self.has_data = False
+        self.steam_id = steam_id
+        self.prev_friends_status = {}
+        self.prev_steamid_status = PlayerStatus.INVALID
+        self.prev_steamid_game = None
+        self.on_friend_list_change = None
+        self.on_steamid_status_change = None
+        self.stop = False
+        self.once = False
+
+        self.player = None
+        self.friends = []
+        self.friends_online = []
+        self.friends_offline = []
+        self.friends_away = []
+        self.friends_games = {}
+
+        self.thread = threading.Thread(target=self.update)
+        self.thread.start()
+
+    def stop_thread(self):
+        self.stop = True
+        self.thread.join()
+
+    def update(self):
+        while not self.stop:
+            self.player = Player(Api.get_player_summary(self.steam_id))
+            self.friends = self.player.get_friends()
+
+            self.friends_online.clear()
+            self.friends_offline.clear()
+            self.friends_away.clear()
+
+            for friend in self.friends:
+                match friend.get_status():
+                    case PlayerStatus.ONLINE:
+                        self.friends_online.append(friend)
+                    case PlayerStatus.OFFLINE:
+                        self.friends_offline.append(friend)
+                    case PlayerStatus.AWAY:
+                        self.friends_away.append(friend)
+
+                self.friends_games[friend.get_playing_game()] = friend
+
+            self.friends_online += self.friends_away
+            self.on_friend_list_change(self.friends + [self.player])
+            self.has_data = True
+
+            self.check_changes()
+
+            time.sleep(5)  # Adjust the delay time (in seconds) according to your needs
+
+    def check_changes(self):
+        player = Player(Api.get_player_summary(self.steam_id))
+        status = player.get_status()
+        game = player.get_playing_game()
+        changed_player_list = []
+        friend_status = {}
+        changed = False
+
+        if status != self.prev_steamid_status or game != self.prev_steamid_game:
+            self.on_steamid_status_change(status, game)
+
+        self.prev_steamid_status = status
+        self.prev_steamid_game = game
+
+        for friend in player.get_friends():
+            if friend.get_name() in self.prev_friends_status.keys():
+                if self.prev_friends_status[friend.get_name()] != friend.get_status():
+                    changed_player_list.append(friend)
+                    changed = True
+
+            friend_status[friend.get_name()] = friend.get_status()
+
+        if len(self.prev_friends_status) == 0 and len(friend_status) > 0:
+            changed_player_list = player.get_friends()
+            changed = True
+
+        if changed:
+            self.on_friend_list_change(changed_player_list)
+
+        self.prev_friends_status = friend_status
