@@ -2,7 +2,7 @@ from lcd1602 import LCD
 from machine import Pin
 import time
 import neopixel
-# 25-1-2024
+# 25-1-2024 yes
 
 
 def steam_uitlezer(st_lst_info, blink_not, cpy_of_lst):
