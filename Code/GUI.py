@@ -5,6 +5,7 @@ import customtkinter as ctk
 import SteamAPI
 from PIL import Image
 import sys
+from functools import partial
 
 from dataclasses import dataclass
 
@@ -225,15 +226,32 @@ class PlayerWidget:
                       text_color=COL_LABEL, hover_color=COL_BG, fg_color=COL_BG).pack(anchor=ctk.NE, padx=2, pady=2)
         ctk.CTkLabel(frame, text=self.name_label.cget("text")).pack(pady=5, padx=5)
         game_list = ctk.CTkScrollableFrame(frame, fg_color=COL_BG, border_width=1, border_color=COL_BORDER)
+        self.game_info_frame = ctk.CTkFrame(frame, fg_color=COL_BG, border_width=1, border_color=COL_BORDER, width=250, height=100)
         for game in self.player_game_list.values():
-            print(game.get_name())
             image = ctk.CTkImage(game.get_capsule_img())
-            label = ctk.CTkLabel(game_list, text=game.get_name(), image=image)
+            label = ctk.CTkButton(game_list, text=game.get_name(), image=image, command=partial(self.game_button_click, game))
             label.pack(side=ctk.TOP)
 
         frame.pack_propagate(False)
         frame.pack(expand=True, side=ctk.TOP, fill=ctk.BOTH)
         game_list.pack(side=ctk.TOP)
+        self.game_info_frame.pack_propagate(False)
+        self.game_info_frame.pack(side=ctk.TOP, expand=True, fill=ctk.BOTH)
+
+    def game_button_click(self, game_info: SteamAPI.GameInfo):
+        for child in self.game_info_frame.winfo_children():
+            child.destroy()
+
+        title = ctk.CTkLabel(self.game_info_frame, text=game_info.get_name(), text_color=COL_GAME_TITLE, font=("Arial", 33))
+        image_header = ctk.CTkImage(game_info.get_header_img(), size=(500, 200))
+        header = ctk.CTkLabel(self.game_info_frame, text="", image=image_header)
+
+        header.pack()
+        title.pack()
+
+        self.game_info_frame.pack_forget()
+        self.game_info_frame.pack_propagate(False)
+        self.game_info_frame.pack(side=ctk.TOP, expand=True, fill=ctk.BOTH)
 
     def avatar_click(self, _):
         pass
@@ -527,6 +545,8 @@ class Window:
             for player in changed_players:
                 d[player.get_name()] = player
 
+            reset_dp = False
+
             for dp in DropDownButton.dropdowns:
                 for w in dp.widgets[:]:
                     if w.player_name in d.keys():
@@ -536,18 +556,21 @@ class Window:
 
                         if w.player_status == SteamAPI.PlayerStatus.ONLINE or w.player_status == SteamAPI.PlayerStatus.AWAY:
                             if new_player_status == SteamAPI.PlayerStatus.OFFLINE:
+                                reset_dp = True
                                 # delete and move from dropdown section
                                 dp.widgets.remove(w)
                                 # w.frame.pack_forget()
                                 DropDownButton.dropdowns_by_title["Offline"].widgets.append(w)
                         elif w.player_status == SteamAPI.PlayerStatus.OFFLINE:
                             if new_player_status == SteamAPI.PlayerStatus.ONLINE or w.player_status == SteamAPI.PlayerStatus.AWAY:
+                                reset_dp = True
                                 # delete and move from dropdown section
                                 # w.frame.pack_forget()
                                 dp.widgets.remove(w)
                                 DropDownButton.dropdowns_by_title["Online Vrienden"].widgets.append(w)
 
                         if new_player_game != "" and new_player_game != w.player_status:
+                            reset_dp = True
                             # w.frame.pack_forget()
                             dp.widgets.remove(w)
                             if new_player_game not in DropDownButton.dropdowns_by_title.keys():
@@ -559,6 +582,9 @@ class Window:
 
             for dp in DropDownButton.dropdowns:
                 dp.update_count()
+
+            if reset_dp:
+                DropDownButton.reset()
 
     def panel_separator_mouse_enter(self, _):
         self.panel_separator.configure(fg_color="#343740")
