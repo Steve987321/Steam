@@ -37,14 +37,27 @@ except FileNotFoundError:
 class GameInfo:
     def __init__(self, data):
         self.data = data
+        self.capsule_img = None
 
-    def get_header_img(self):
-        return self.data[""]
+    def get_capsule_img(self):
+        if self.capsule_img is not None:
+            return self.capsule_img
+
+        image_data = requests.get(self.data["capsule_image"])
+        if not image_data.ok:
+            print("[GameInfo] image data kon niet worden opgehaald")
+            return None
+
+        self.capsule_img = Image.open(BytesIO(image_data.content))
+        return self.capsule_img
+
+    def get_name(self):
+        return self.data["name"]
 
 
 class Api:
 
-    processed_ids = {}
+    processed_game_ids = {}
 
     @staticmethod
     def get_json(request):
@@ -86,9 +99,11 @@ class Api:
         return friends
 
     @staticmethod
-    def get_player_games(steamid):
-        app_ids = None
+    def get_player_games_data(steamid):
         url = 'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/'
+        base_url = "https://store.steampowered.com/api/appdetails/"
+        game_data = {}
+
         params = {
             'key': KEY,
             'steamid': steamid,
@@ -103,12 +118,9 @@ class Api:
             print(f"Error: {response.status_code}, {response.text}")
             return
 
-        base_url = "https://store.steampowered.com/api/appdetails/"
-
-        game_names = []
-        def get_name(app_id):
-            if app_id in Api.processed_ids.keys():
-                game_names.append(({"app_id": app_id, "game_name": Api.processed_ids[app_id]}))
+        def get_name(app_id: str, game_data):
+            if app_id in Api.processed_game_ids.keys():
+                game_data[app_id] = Api.processed_game_ids[app_id]
                 return
 
             url = f"{base_url}?appids={app_id}"
@@ -116,32 +128,31 @@ class Api:
 
             if response.ok:
                 data = response.json()
-                if data.get(str(app_id), {}).get("success", False):
-                    game_name = data[str(app_id)]["data"]["name"]
-                    game_names.append(({"app_id": app_id, "game_name": game_name}))
-                    Api.processed_ids[app_id] = game_name
+                if data.get(app_id, {}).get("success", False):
+                    game_data[app_id] = GameInfo(data[app_id]["data"])
+                    Api.processed_game_ids[app_id] = GameInfo(data[app_id]["data"])
                 else:
                     print(f"Error: Game ID {app_id} not found")
             else:
                 print(f"Error: Unable to retrieve data for Game ID {app_id}")
 
-            return 0
+            return
 
         pool = ThreadPool()
         task_list_results = []
         for app_id in app_ids:
-            task_list_results.append(pool.apply_async(get_name, args=(app_id,)))
+            task_list_results.append(pool.apply_async(get_name, args=(str(app_id), game_data)))
 
         for res in task_list_results:
             res.get()
 
         pool.close()
 
-        return game_names
+        return game_data
 
 
 class Player:
-    def __init__(self, player_data, game_list = None):
+    def __init__(self, player_data, game_list=None):
         if "steamid" in player_data:
             self.data = player_data
         else:
