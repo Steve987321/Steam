@@ -12,7 +12,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 
 def LinearRegression(data):  # https://towardsdatascience.com/linear-regression-using-gradient-descent-97a6c8700931
-    # Read csv data
+    # Read data
     X = data.iloc[:, 0]
     Y = data.iloc[:, 1]
 
