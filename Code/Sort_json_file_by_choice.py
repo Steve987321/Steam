@@ -12,10 +12,7 @@ def bubble_sort(lst, key, descending=False):
         length_of_unsorted_list -= 1
 
     if descending:
-        rev_list = []
-        for i in lst:  # My own reversed function, instead of reversed(lst)
-            rev_list.insert(0, i)
-        return rev_list
+        return lst[::-1]
     return lst
 
 
