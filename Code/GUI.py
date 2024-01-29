@@ -88,6 +88,7 @@ class PlayerWidget:
         self.player_name = None
         self.player_status = SteamAPI.PlayerStatus.INVALID
         self.player_id = player.get_id()
+        self.player_game_list = None
         self.size = size
         self.has_valid_image = False
 
@@ -209,6 +210,9 @@ class PlayerWidget:
         self.frame.configure(fg_color="transparent")
 
     def on_mouse_press(self, _):
+        if self.player_game_list is None:
+            self.player_game_list = SteamAPI.Api.get_player_games_data(self.player_id)
+
         self.window.clear_info_panel()
 
         border_kleur = COL_BORDER
@@ -220,8 +224,16 @@ class PlayerWidget:
         ctk.CTkButton(frame, text='X', width=25, height=25, command=self.window.reset_info_panel,
                       text_color=COL_LABEL, hover_color=COL_BG, fg_color=COL_BG).pack(anchor=ctk.NE, padx=2, pady=2)
         ctk.CTkLabel(frame, text=self.name_label.cget("text")).pack(pady=5, padx=5)
+        game_list = ctk.CTkScrollableFrame(frame, fg_color=COL_BG, border_width=1, border_color=COL_BORDER)
+        for game in self.player_game_list.values():
+            print(game.get_name())
+            image = ctk.CTkImage(game.get_capsule_img())
+            label = ctk.CTkLabel(game_list, text=game.get_name(), image=image)
+            label.pack(side=ctk.TOP)
+
         frame.pack_propagate(False)
-        frame.pack(expand=True, fill=ctk.BOTH)
+        frame.pack(expand=True, side=ctk.TOP, fill=ctk.BOTH)
+        game_list.pack(side=ctk.TOP)
 
     def avatar_click(self, _):
         pass
@@ -466,7 +478,7 @@ class Window:
             for friend in changed_players:
                 if friend.get_id() == self.steamid:
                     continue
-                    
+
                 match friend.get_status():
                     case SteamAPI.PlayerStatus.ONLINE:
                         friends_online.append(friend)
