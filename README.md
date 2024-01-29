@@ -4,6 +4,7 @@
 
 **Namen, studentnummers en usernames (github):**
 Daniel, 1855133, DanielBekkers;
+Stefan, 1856997, Steve987321;
 
 
 Om de code uit te kunnen voeren moet je requirements.txt downloaden, alles in een codeerprogramma zetten en dan het script main.py starten.
