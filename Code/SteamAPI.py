@@ -168,19 +168,6 @@ class Player:
             return ""
         pass
 
-    def get_achievements(self):
-        """Get player achievements"""
-        try:
-            steam_id = self.get_id()
-            request = f"http://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v0001/?appid=your_app_id&key={KEY}&steamid={steam_id}"
-            response = Api.get_json(request)
-            achievements = response.get('playerstats', {}).get('achievements', [])
-
-            return achievements
-        except Exception as e:
-            print(f"[Player] Error getting player achievements: {e}")
-            return []
-
 class AvatarLoadThread:
     def __init__(self, avatars: dict):
         self.avatars = avatars
@@ -198,9 +185,6 @@ class AvatarLoadThread:
     def is_alive(self):
         if self.thread is None:
             return False
-
-
-
 
         return self.thread.is_alive()
 
@@ -236,10 +220,6 @@ class SteamApiThread:
         self.get_games(KEY,steam_id)
         self.thread = threading.Thread(target=self.update)
         self.thread.start()
-
-    # def player_Achievement(self):
-    #     print(Api.get_player_summary(self.steam_id))
-
 
     def stop_thread(self):
         self.stop = True
@@ -287,7 +267,6 @@ class SteamApiThread:
         self.prev_steamid_status = status
         self.prev_steamid_game = game
 
-
         for friend in player.get_friends():
             if friend.get_name() in self.prev_friends_status.keys():
                 if self.prev_friends_status[friend.get_name()] != friend.get_status():
@@ -302,7 +281,6 @@ class SteamApiThread:
 
         if changed:
             self.on_friend_list_change(changed_player_list)
-
 
     def get_games(self, api_key, steamid):
         url = 'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/'
