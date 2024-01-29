@@ -58,10 +58,7 @@ class StatistiekWindow:
     def __init__(self, window_name: str = "StatistiekWindow", window_size: str = "1080x1440"):
         self.root = ctk.CTkToplevel()
         self.root.title(window_name)
-        self.root.resizable(False, False)
         self.root.geometry(window_size)
-
-        self.steam_api_test()
 
     def is_open(self):
         """Geeft aan of scherm bestaat"""
@@ -575,6 +572,7 @@ class Window:
 
     def toon_statistiek_window(self):
         if self.statistiek_window is not None:
+            print(self.statistiek_window.is_open())
             if self.statistiek_window.is_open():
                 return
 
@@ -588,7 +586,7 @@ class Window:
         self.clear_info_panel()
         ctk.CTkLabel(self.vriend_info, text="Klik op een vriend om informatie te tonen").pack(fill=ctk.BOTH,
                                                                                               expand=True, padx=5,
-                                                                                              pady=5)
+                                                                                            pady=5)
 
     def check_images(self):
         if not self.image_thread.is_alive():
