@@ -38,6 +38,87 @@ def LinearRegression(data):  # https://towardsdatascience.com/linear-regression-
     return Y_pred, X, Y
 
 
+class MergeSort:
+    @staticmethod
+    def divide_list(lst):
+        # Divide the list in two sub-lists
+        length = len(lst) // 2
+        left_list = lst[:length]
+        right_list = lst[length:]
+
+        return left_list, right_list
+
+    @staticmethod
+    def merge_sort(lst, key):  # https://reintech.io/blog/solving-problems-with-merge-sort-in-python
+        if len(lst) <= 1:  # Base case
+            return lst
+
+        left_list, right_list = MergeSort.divide_list(lst)  # Divide list
+
+        left_list = MergeSort.merge_sort(left_list, key)
+        right_list = MergeSort.merge_sort(right_list, key)
+
+        return MergeSort.merge(left_list, right_list, key)
+
+    @staticmethod
+    def merge(left, right, key):
+        merged = []
+        left_index = 0
+        right_index = 0
+
+        while left_index < len(left) and right_index < len(right):
+            if left[left_index][key] <= right[right_index][key]:
+                merged.append(left[left_index])
+                left_index += 1
+            else:
+                merged.append(right[right_index])
+                right_index += 1
+
+        merged += left[left_index:]
+        merged += right[right_index:]
+
+        return merged
+
+
+class SortByJson:
+    @staticmethod
+    def bubble_sort(lst, key, descending=False):  # NOT USED ANYMORE (switched to mergesort)
+        length_of_unsorted_list = len(lst) - 1
+        while length_of_unsorted_list > 0:
+            for i in range(length_of_unsorted_list):
+                if lst[i][key] > lst[i + 1][key]:  # if the current element is larger than the next element, then swap them
+                    temp = lst[i + 1][key]
+                    lst[i + 1][key] = lst[i][key]
+                    lst[i][key] = temp
+            length_of_unsorted_list -= 1
+
+        if descending:
+            return lst[::-1]
+        return lst
+
+    @staticmethod
+    def filter_list(loaded_json):
+        # Get the keys
+        keys = ["appid", "name", "release_date", "required_age", "achievements", "positive_ratings", "negative_ratings", "average_playtime", "owners", "price"]
+        key_string = ""
+        for key in keys:
+            key_string += f"{key}, "
+
+        # Check if input is correct
+        correct_input = False
+        input_key = ""
+        while not correct_input:
+            key_input = input(f"\x1b[34mFilter by one of the following: {key_string}\nFilter by key: ")
+
+            for key in keys:
+                if key_input == key:
+                    correct_input = True
+                    input_key = key
+
+        sorted_list = MergeSort.merge_sort(loaded_json, input_key)
+        return sorted_list
+
+
 class Plots:
     def __init__(self, data):
         self.data = data
@@ -194,6 +275,7 @@ if __name__ == '__main__':
         rjson = file_read.read()
         loaded_json = json.loads(rjson)
 
+    SortByJson.filter_list(loaded_json)
     main(loaded_json)
     Plots(loaded_json)
 
