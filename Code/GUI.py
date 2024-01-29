@@ -464,6 +464,9 @@ class Window:
             friends_games = {}
 
             for friend in changed_players:
+                if friend.get_id() == self.steamid:
+                    continue
+                    
                 match friend.get_status():
                     case SteamAPI.PlayerStatus.ONLINE:
                         friends_online.append(friend)
