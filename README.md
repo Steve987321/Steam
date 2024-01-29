@@ -1,8 +1,11 @@
-# Steam
-# **_Hallo**_ 
+**Project Steam**
 
-DUNCAN hmm
+(Hier komt: Een voor buitenstaanders begrijpelijke beschrijving van het doel van het project)
 
-Damian
+**Namen, studentnummers en usernames (github):**
+Daniel, 1855133, DanielBekkers;
+Stefan, 1856997, Steve987321;
 
-Stefan
+
+Om de code uit te kunnen voeren moet je requirements.txt downloaden, alles in een codeerprogramma zetten en dan het script main.py starten.
+
