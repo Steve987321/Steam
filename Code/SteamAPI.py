@@ -38,6 +38,7 @@ class GameInfo:
     def __init__(self, data):
         self.data = data
         self.capsule_img = None
+        self.header_img = None
 
     def get_capsule_img(self):
         if self.capsule_img is not None:
@@ -45,14 +46,28 @@ class GameInfo:
 
         image_data = requests.get(self.data["capsule_image"])
         if not image_data.ok:
-            print("[GameInfo] image data kon niet worden opgehaald")
+            print("[GameInfo] capsule image data kon niet worden opgehaald")
             return None
 
         self.capsule_img = Image.open(BytesIO(image_data.content))
         return self.capsule_img
 
+    def get_header_img(self):
+        if self.header_img is not None:
+            return self.header_img
+
+        image_data = requests.get(self.data["header_image"])
+        if not image_data.ok:
+            print("[GameInfo] header image data kon niet worden opgehaald")
+            return None
+
+        self.header_img = Image.open(BytesIO(image_data.content))
+        return self.header_img
+
+
     def get_name(self):
         return self.data["name"]
+
 
 
 class Api:
@@ -88,6 +103,8 @@ class Api:
         """Returns list of friends data"""
         request = f"https://api.steampowered.com/ISteamUser/GetFriendList/v1/?key={KEY}&steamid={steamid}&format=json"
         response = Api.get_json(request)
+        if len(response) == 0:
+            return []
 
         friends = []
         try:
@@ -191,7 +208,9 @@ class Player:
                 print(f"[Player] steam id niet gevonden bij vriend: {e}")
 
         friend_summaries_response = Api.get_player_summaries(friends_steamids)
-        for player_data in friend_summaries_response["response"]["players"]:
+        response = friend_summaries_response["response"]
+        # print(response)
+        for player_data in response["players"]:
             friends_players.append(Player(player_data))
 
         return friends_players
@@ -204,8 +223,6 @@ class Player:
             print(f"[Player] naam kan niet worden gevonden: {e}")
         except ValueError as e:
             print(f"[Player] profile state is invalid: {e}")
-
-        pass
 
     def get_avatar(self, formaat: AvatarFormaat = AvatarFormaat.MIDDEL) -> Image:
         """Geeft Image van avatar"""
