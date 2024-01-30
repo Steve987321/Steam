@@ -97,7 +97,7 @@ class SortByJson:
         return lst
 
     @staticmethod
-    def filter_list(loaded_json):
+    def filter_list(loaded_json, key_input=None):
         # Get the keys
         keys = ["appid", "name", "release_date", "required_age", "achievements", "positive_ratings", "negative_ratings", "average_playtime", "owners", "price"]
         key_string = ""
@@ -108,7 +108,8 @@ class SortByJson:
         correct_input = False
         input_key = ""
         while not correct_input:
-            key_input = input(f"\x1b[34mFilter by one of the following: {key_string}\nFilter by key: ")
+            if key_input is None:
+                key_input = input(f"\x1b[34mFilter by one of the following: {key_string}\nFilter by key: ")
 
             for key in keys:
                 if key_input == key:
@@ -138,8 +139,8 @@ class Plots:
         Plots.figure1(window, names, keys)
         Plots.figure2(window, names, keys)
         # Plots.figure3(window, names, keys)
-        Plots.figure4(self, window)
-        Plots.figure5(self, window)
+        Plots.figure4(data, window)
+        Plots.figure5(data, window)
 
         window.mainloop()
 
@@ -180,8 +181,8 @@ class Plots:
                wedgeprops={"linewidth": 3, "edgecolor": "white"})
         canvas.draw()
 
-    def figure4(self, window):
-        data = self.data
+    @staticmethod
+    def figure4(data, window):
         newData = []
         cols = ['price', 'average_playtime']
 
@@ -207,8 +208,8 @@ class Plots:
         plt.ylim(-5, 500)
         canvas.draw()
 
-    def figure5(self, window):
-        data = self.data
+    @staticmethod
+    def figure5(data, window):
         newData = [line['price'] for line in data]
         counted = Counter(newData)
 
