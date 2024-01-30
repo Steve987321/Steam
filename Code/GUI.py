@@ -6,6 +6,8 @@ import SteamAPI
 from PIL import Image
 import sys
 from functools import partial
+from StatisticPlots import Plots, SortByJson
+import json
 
 from dataclasses import dataclass
 
@@ -56,17 +58,57 @@ def lerp_color(col1, col2, t):
 
 
 class StatistiekWindow:
-    def __init__(self, window_name: str = "StatistiekWindow", window_size: str = "1080x1440"):
+    def __init__(self, window_name: str = "StatistiekWindow"):
         self.root = ctk.CTkToplevel()
         self.root.title(window_name)
-        self.root.geometry(window_size)
+        self.root.geometry("900x400")
+
+        with open("steam.json") as file_read:
+            rjson = file_read.read()
+            loaded_json = json.loads(rjson)
+
+        self.data = loaded_json
+        self.valid_keys = ["appid", "name", "release_date", "required_age", "achievements", "positive_ratings", "negative_ratings", "average_playtime", "owners", "price"]
+
+        help_label = ctk.CTkLabel(self.root, text=f"Kies uit de volgende opties: \n {self.valid_keys}")
+        self.in_key = ctk.CTkEntry(self.root)
+        self.btn_show_stats = ctk.CTkButton(self.root, text="Klaar", command=self.on_stats_show)
+
+        help_label.pack(side=ctk.TOP, anchor=ctk.CENTER)
+        self.in_key.pack(side=ctk.TOP, anchor=ctk.CENTER)
+        self.btn_show_stats.pack(side=ctk.TOP, anchor=ctk.CENTER)
 
     def is_open(self):
         """Geeft aan of scherm bestaat"""
         return self.root.winfo_exists()
 
-    def get_window(self):
-        return self.root
+    def on_stats_show(self):
+        in_key = self.in_key.get()
+
+        if in_key not in self.valid_keys:
+            return
+
+        for child in self.root.winfo_children():
+            child.destroy()
+
+        self.root.grid_columnconfigure([0, 1], weight=1)
+        self.root.grid_columnconfigure([0, 1], weight=1)
+
+        lst = sorted(self.data, key=lambda x: x["positive_ratings"], reverse=True)
+
+        SortByJson.filter_list(self.data, in_key)
+
+        names = []
+        keys = []
+        for i in lst[:5]:
+            names.append(i["name"])
+            keys.append(i["positive_ratings"])
+
+        Plots.figure1(self.root, names, keys)
+        Plots.figure2(self.root, names, keys)
+        # Plots.figure3(window, names, keys)
+        Plots.figure4(self.data, self.root)
+        Plots.figure5(self.data, self.root)
 
     def steam_api_test(self):
         SteamAPI.test_steam_api()
