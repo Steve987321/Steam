@@ -64,11 +64,33 @@ class GameInfo:
         self.header_img = Image.open(BytesIO(image_data.content))
         return self.header_img
 
-
     def get_name(self):
         return self.data["name"]
 
+    def get_metacritic_score(self):
+        if "metacritic" not in self.data:
+            return None
 
+        return int(self.data["metacritic"]["score"])
+
+    def get_developers(self) -> list[str]:
+        res = []
+        for developer in self.data["developers"]:
+            res.append(developer)
+        return res
+
+    def get_price(self) -> str:
+        if self.data["is_free"]:
+            return "Free"
+        else:
+            return self.data["price_overview"]["final_formatted"]
+
+    def get_supported_platforms(self) -> list[str]:
+        res = []
+        for platform, supported in self.data["platforms"].items():
+            if supported:
+                res.append(platform)
+        return res
 
 class Api:
 
@@ -208,8 +230,16 @@ class Player:
                 print(f"[Player] steam id niet gevonden bij vriend: {e}")
 
         friend_summaries_response = Api.get_player_summaries(friends_steamids)
+        if len(friend_summaries_response) == 0:
+            for _ in range(3):
+                friend_summaries_response = Api.get_player_summaries(friends_steamids)
+                if len(friend_summaries_response) > 0:
+                    break
+
+        if len(friend_summaries_response) == 0:
+            print("Friend summaries kon niet worden opgehaald...")
+            return []
         response = friend_summaries_response["response"]
-        # print(response)
         for player_data in response["players"]:
             friends_players.append(Player(player_data))
 
@@ -312,7 +342,6 @@ class SteamApiThread:
         self.friends_online = []
         self.friends_offline = []
         self.friends_away = []
-        self.friends_games = {}
 
         self.prev_online_friends = set()
         self.processed_game_ids = set()
@@ -341,13 +370,13 @@ class SteamApiThread:
                     case PlayerStatus.AWAY:
                         self.friends_away.append(friend)
 
-                self.friends_games[friend.get_playing_game()] = friend
-
             self.friends_online += self.friends_away
-            self.on_friend_list_change(self.friends + [self.player])
-            self.has_data = True
+            if not self.has_data:
+                self.on_friend_list_change(self.friends + [self.player])
+            else:
+                self.check_changes()
 
-            self.check_changes()
+            self.has_data = True
 
             time.sleep(5)  # Adjust the delay time (in seconds) according to your needs
 
@@ -355,8 +384,8 @@ class SteamApiThread:
         player = Player(Api.get_player_summary(self.steam_id))
         status = player.get_status()
         game = player.get_playing_game()
+
         changed_player_list = []
-        friend_status = {}
         changed = False
 
         if status != self.prev_steamid_status or game != self.prev_steamid_game:
@@ -371,11 +400,9 @@ class SteamApiThread:
                     changed_player_list.append(friend)
                     changed = True
 
-            friend_status[friend.get_name()] = friend.get_status()
-
-        if len(self.prev_friends_status) == 0 and len(friend_status) > 0:
-            changed_player_list = player.get_friends()
-            changed = True
-
         if changed:
             self.on_friend_list_change(changed_player_list)
+
+        self.prev_friends_status.clear()
+        for friend in player.get_friends():
+            self.prev_friends_status[friend.get_name()] = friend.get_status()
