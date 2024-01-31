@@ -10,6 +10,20 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 # plt.style.use("grayscale")  # Change style of plots
 
+def binary_search(lst, arg, key):
+    minIndex = 0
+    maxIndex = len(lst)
+    while maxIndex - minIndex > 1:
+        scooby = (maxIndex - minIndex) / 2
+        searchIndex = scooby + minIndex
+        if arg > lst[int(searchIndex)][key]:
+            minIndex += scooby  # take 2nd half
+        elif arg < lst[int(searchIndex)][key]:
+            maxIndex -= scooby  # take 1st half
+        else:
+            return True, int(searchIndex)
+    return False, -1
+
 
 def LinearRegression(data):  # https://towardsdatascience.com/linear-regression-using-gradient-descent-97a6c8700931
     # Read data

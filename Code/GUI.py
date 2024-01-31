@@ -6,7 +6,7 @@ import SteamAPI
 from PIL import Image
 import sys
 from functools import partial
-from StatisticPlots import Plots, SortByJson, SteamData
+from StatisticPlots import Plots, SortByJson, SteamData, binary_search
 import json
 
 from dataclasses import dataclass
@@ -91,12 +91,13 @@ class StatistiekWindow:
         for child in self.root.winfo_children():
             child.destroy()
 
-        self.root.grid_rowconfigure([0, 1, 2], weight=1)
-        self.root.grid_columnconfigure([0, 1], weight=1)
+        self.root.grid_rowconfigure([0, 1, 2, 3], weight=1)
+        self.root.grid_columnconfigure([0, 1, 2], weight=1)
 
         lst = sorted(self.data, key=lambda x: x["positive_ratings"], reverse=True)
 
         data = SortByJson.filter_list(self.data, in_key)
+        sorted_search_data = SortByJson.filter_list(self.data, "name")
 
         names = []
         keys = []
@@ -113,12 +114,37 @@ class StatistiekWindow:
         biggest, name = SteamData.most_expensive_game(data)
         infolabel = ctk.CTkLabel(self.root,
                                  text_color="green",
-                                 text=f"Average price: {SteamData.avg_price(data)}\n"
+                                 text=f"Game info:"
+                                      f"Average price: {SteamData.avg_price(data)}\n"
                                  f"Average playtime: {SteamData.min_to_hours(SteamData.avg_playtime(data))}\n"
                                  f"Average positive reviews: {SteamData.avg_positive(data)}\n"
                                  f"Most expensive game belongs to: {name} with a price of ${biggest}\n"
                                  f"There are {SteamData.amountOfGames(data)} games on steam")
         infolabel.grid(row=2, column=0)
+
+        zoekentry = ctk.CTkEntry(self.root, placeholder_text="Zoek naar games:")
+        zoekentry.grid(row=0, column=2)
+
+        zoeklabel = ctk.CTkLabel(self.root, text="")
+        zoeklabel.grid(row=2, column=2)
+
+        def get_entry():
+            game = zoekentry.get()
+
+            exists, index = binary_search(sorted_search_data, game, "name")
+
+            charstar = ""
+            for i, v in sorted_search_data[index].items():
+                charstar += f"{i}: {v}\n"
+
+            if exists:
+                zoeklabel.configure(text=charstar)
+            else:
+                zoeklabel.configure(text="Can't find game")
+
+        zoekbutton = ctk.CTkButton(self.root, command=get_entry, text="Zoek")
+        zoekbutton.grid(row=1, column=2)
+
 
     def steam_api_test(self):
         SteamAPI.test_steam_api()
