@@ -597,9 +597,10 @@ class Window:
         for f in changed_friends:
             lst.append([f.get_name(), f.get_status().name])
 
-        print(str(lst))
+        lst_str = str(lst)
+        lst_str.replace(", ", ';')
 
-        main_en_pico_com.lists = str(lst)
+        main_en_pico_com.lists = lst_str
 
         self.update_drop_downs(changed_friends)
 
