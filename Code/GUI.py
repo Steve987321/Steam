@@ -71,7 +71,8 @@ class StatistiekWindow:
         self.valid_keys = ["appid", "name", "release_date", "required_age", "achievements", "positive_ratings", "negative_ratings", "average_playtime", "owners", "price"]
 
         help_label = ctk.CTkLabel(self.root, text=f"Kies uit de volgende opties: \n {self.valid_keys}")
-        self.in_key = ctk.CTkEntry(self.root)
+        self.in_key = ctk.CTkComboBox(self.root, values=self.valid_keys)
+        # self.in_key = ctk.CTkEntry(self.root)
         self.btn_show_stats = ctk.CTkButton(self.root, text="Klaar", command=self.on_stats_show)
 
         help_label.pack(side=ctk.TOP, anchor=ctk.CENTER)
