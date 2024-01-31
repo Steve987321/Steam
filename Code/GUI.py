@@ -590,17 +590,24 @@ class Window:
         main_en_pico_com.serial_port_.close()
         print("[INFO] Serial port closed. Bye.")
 
-
     def on_fl_change(self, changed_friends):
-        lst = []
+        lst_online = []
+        lst_offline = []
+        lst_game = []
 
         for f in changed_friends:
-            lst.append([f.get_name(), f.get_status().name])
+            if f.get_status() == SteamAPI.PlayerStatus.ONLINE:
+                if f.get_playing_game() is not "":
+                    lst_game.append([f.get_name(), f.get_playing_game()])
+                else:
+                    lst_online.append([f.get_name(), f.get_playing_game()])
+            elif f.get_status() == SteamAPI.PlayerStatus.OFFLINE:
+                lst_offline.append([f.get_name(), f.get_playing_game()])
 
-        lst_str = str(lst)
-        lst_str.replace(", ", ';')
+        lst = [lst_online, lst_offline, lst_game]
+        print(lst)
 
-        main_en_pico_com.lists = lst_str
+        main_en_pico_com.lists = str(lst_str)
 
         self.update_drop_downs(changed_friends)
 
