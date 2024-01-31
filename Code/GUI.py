@@ -94,16 +94,15 @@ class StatistiekWindow:
         self.root.grid_rowconfigure([0, 1, 2, 3], weight=1)
         self.root.grid_columnconfigure([0, 1, 2], weight=1)
 
-        lst = sorted(self.data, key=lambda x: x["positive_ratings"], reverse=True)
+        lst = sorted(self.data, key=lambda x: x[in_key], reverse=True)
 
-        data = SortByJson.filter_list(self.data, in_key)
         sorted_search_data = SortByJson.filter_list(self.data, "name")
 
         names = []
         keys = []
         for i in lst[:5]:
             names.append(i["name"])
-            keys.append(i["positive_ratings"])
+            keys.append(i[in_key])
 
         Plots.figure1(self.root, names, keys)
         Plots.figure2(self.root, names, keys)
@@ -111,15 +110,15 @@ class StatistiekWindow:
         Plots.figure4(self.data, self.root)
         Plots.figure5(self.data, self.root)
 
-        biggest, name = SteamData.most_expensive_game(data)
+        biggest, name = SteamData.most_expensive_game(sorted_search_data)
         infolabel = ctk.CTkLabel(self.root,
                                  text_color="green",
                                  text=f"Game info:"
-                                      f"Average price: {SteamData.avg_price(data)}\n"
-                                 f"Average playtime in hours: {SteamData.min_to_hours(SteamData.avg_playtime(data))}\n"
-                                 f"Average positive reviews: {SteamData.avg_positive(data)}\n"
+                                      f"Average price: {SteamData.avg_price(sorted_search_data)}\n"
+                                 f"Average playtime in hours: {SteamData.min_to_hours(SteamData.avg_playtime(sorted_search_data))}\n"
+                                 f"Average positive reviews: {SteamData.avg_positive(sorted_search_data)}\n"
                                  f"Most expensive game belongs to: {name} with a price of ${biggest}\n"
-                                 f"There are {SteamData.amountOfGames(data)} games on steam")
+                                 f"There are {SteamData.amountOfGames(sorted_search_data)} games on steam")
         infolabel.grid(row=2, column=0)
 
         zoekentry = ctk.CTkEntry(self.root, placeholder_text="Zoek naar games:")
