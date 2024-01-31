@@ -25,6 +25,10 @@ COL_GREY = "#434953"
 COL_GREY_WIDGET = "#868789"
 COL_LIGHT_BLUE = "#78CEF3"
 COL_DARK_BLUE = "#4989A3"
+COL_BTN = "#3E444F"
+COL_BTN_HOVER = "#474D57"
+
+STYLE_CORNER_RADIUS = 2
 
 
 def lerp(a, b, t):
@@ -62,6 +66,7 @@ class StatistiekWindow:
         self.root = ctk.CTkToplevel()
         self.root.title(window_name)
         self.root.geometry("900x400")
+        self.root.configure(fg_color=COL_BG)
 
         with open("steam.json") as file_read:
             rjson = file_read.read()
@@ -72,7 +77,7 @@ class StatistiekWindow:
 
         help_label = ctk.CTkLabel(self.root, text=f"Kies uit de volgende opties: \n {self.valid_keys}")
         self.in_key = ctk.CTkEntry(self.root)
-        self.btn_show_stats = ctk.CTkButton(self.root, text="Klaar", command=self.on_stats_show)
+        self.btn_show_stats = ctk.CTkButton(self.root, text="Klaar", command=self.on_stats_show, hover_color=COL_BTN_HOVER, fg_color=COL_BTN, corner_radius=STYLE_CORNER_RADIUS)
 
         help_label.pack(side=ctk.TOP, anchor=ctk.CENTER)
         self.in_key.pack(side=ctk.TOP, anchor=ctk.CENTER)
@@ -262,20 +267,20 @@ class PlayerWidget:
         if self.player_status == SteamAPI.PlayerStatus.OFFLINE:
             border_kleur = COL_GREY_WIDGET
 
-        frame = ctk.CTkFrame(self.window.vriend_info, fg_color=COL_BG, border_width=1, border_color=border_kleur,
+        frame = ctk.CTkFrame(self.window.vriend_info, fg_color=COL_BG, border_width=0, border_color=border_kleur,
                              corner_radius=0)
         ctk.CTkButton(frame, text='X', width=25, height=25, command=self.window.reset_info_panel,
-                      text_color=COL_LABEL, hover_color=COL_BG, fg_color=COL_BG).pack(anchor=ctk.NE, padx=2, pady=2)
+                      text_color=COL_LABEL, hover_color=COL_BTN, fg_color=COL_BTN, corner_radius=STYLE_CORNER_RADIUS).pack(anchor=ctk.NE, padx=2, pady=2)
         ctk.CTkLabel(frame, text=self.name_label.cget("text")).pack(pady=5, padx=5)
-        game_list = ctk.CTkScrollableFrame(frame, fg_color=COL_BG, border_width=1, border_color=COL_BORDER)
-        self.game_info_frame = ctk.CTkFrame(frame, fg_color=COL_BG, border_width=1, border_color=COL_BORDER, width=250, height=100)
+        game_list = ctk.CTkScrollableFrame(frame, fg_color=COL_BG, border_width=0, border_color=COL_BORDER)
+        self.game_info_frame = ctk.CTkFrame(frame, fg_color=COL_BG, border_width=0, width=250, height=100)
         for game in self.player_game_list.values():
             image = ctk.CTkImage(game.get_capsule_img())
-            label = ctk.CTkButton(game_list, text=game.get_name(), image=image, command=partial(self.game_button_click, game))
+            label = ctk.CTkButton(game_list, text=game.get_name(), image=image, fg_color=COL_BTN, hover_color=COL_BTN_HOVER, corner_radius=STYLE_CORNER_RADIUS, command=partial(self.game_button_click, game))
             label.pack(side=ctk.TOP)
 
         frame.pack_propagate(False)
-        frame.pack(expand=True, side=ctk.TOP, fill=ctk.BOTH)
+        frame.pack(expand=True, padx=5, pady=5, side=ctk.TOP, fill=ctk.BOTH)
         game_list.pack(side=ctk.TOP)
         self.game_info_frame.pack_propagate(False)
         self.game_info_frame.pack(side=ctk.TOP, expand=True, fill=ctk.BOTH)
@@ -288,8 +293,44 @@ class PlayerWidget:
         image_header = ctk.CTkImage(game_info.get_header_img(), size=(500, 200))
         header = ctk.CTkLabel(self.game_info_frame, text="", image=image_header)
 
+        score = game_info.get_metacritic_score()
+        if score is not None:
+            metacritic_frame = ctk.CTkFrame(self.game_info_frame, fg_color=COL_BG)
+            score = clamp(score, 0, 100)
+            score_text_col = lerp_color("#FF0000", "#00FF00", score / 100)
+            ctk.CTkLabel(metacritic_frame, text="Metacritic score: ", text_color=COL_LABEL).pack(side=ctk.LEFT)
+            ctk.CTkLabel(metacritic_frame, text=score, text_color=score_text_col).pack(side=ctk.LEFT)
+
+        developers = game_info.get_developers()
+        developers_str = ""
+        for developer in developers:
+            developers_str += developer + ", "
+        developers_str = developers_str[:len(developers_str) - 2]
+        developers_frame = ctk.CTkFrame(self.game_info_frame, fg_color=COL_BG)
+        ctk.CTkLabel(developers_frame, text="Developers: ", text_color=COL_LABEL).pack(side=ctk.LEFT)
+        ctk.CTkLabel(developers_frame, text=developers_str, text_color=COL_GREY).pack(side=ctk.LEFT)
+
+        price_frame = ctk.CTkFrame(self.game_info_frame, fg_color=COL_BG)
+        ctk.CTkLabel(price_frame, text="Price: ", text_color=COL_LABEL).pack(side=ctk.LEFT)
+        ctk.CTkLabel(price_frame, text=game_info.get_price(), text_color=COL_GREY).pack(side=ctk.LEFT)
+
+        platforms = game_info.get_supported_platforms()
+        platforms_str = ""
+        for platform in platforms:
+            platforms_str += platform + ", "
+
+        platforms_str = platforms_str[:len(platforms_str) - 2]
+        platforms_frame = ctk.CTkFrame(self.game_info_frame, fg_color=COL_BG)
+        ctk.CTkLabel(platforms_frame, text="Platforms: ", text_color=COL_LABEL).pack(side=ctk.LEFT)
+        ctk.CTkLabel(platforms_frame, text=platforms_str, text_color=COL_GREY).pack(side=ctk.LEFT)
+
         header.pack()
         title.pack()
+        if score is not None:
+            metacritic_frame.pack(side=ctk.TOP, fill=ctk.X)
+        developers_frame.pack(side=ctk.TOP, fill=ctk.X)
+        price_frame.pack(side=ctk.TOP, fill=ctk.X)
+        platforms_frame.pack(side=ctk.TOP, fill=ctk.X)
 
         self.game_info_frame.pack_forget()
         self.game_info_frame.pack_propagate(False)
@@ -471,7 +512,7 @@ class Window:
 
         self.info_panel = ctk.CTkFrame(self.root, width=self.info_panel_width, fg_color=COL_BG, border_color=COL_BORDER,
                                        border_width=0, corner_radius=0)
-        statistiek_knop = ctk.CTkButton(self.info_panel, width=10, height=10, text="statistiek",
+        statistiek_knop = ctk.CTkButton(self.info_panel, width=10, height=10, text="statistiek", fg_color=COL_BTN, hover_color=COL_BTN_HOVER, corner_radius=STYLE_CORNER_RADIUS,
                                         command=self.toon_statistiek_window)
         statistiek_knop.pack(side=ctk.TOP, anchor=ctk.NW)
         self.vriend_info = ctk.CTkFrame(self.info_panel, width=self.info_panel_width, fg_color=COL_BG)
@@ -487,6 +528,7 @@ class Window:
             self.lplayer_avatar.update_status(game, status)
 
     def on_fl_change(self, changed_friends):
+        print("on fl change, changed players:", len(changed_friends))
         self.update_drop_downs(changed_friends)
 
     def show_widgets(self):
