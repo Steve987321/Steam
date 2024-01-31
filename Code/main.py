@@ -22,3 +22,5 @@ if __name__ == "__main__":
     scherm = Window("Steam Train Groep", 500, 500, steam_id)
     scherm.show()
     scherm.steamAPIThread.stop_thread()
+    scherm.pico_stop = True
+    scherm.pico_thread.join()

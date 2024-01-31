@@ -5,6 +5,9 @@ import sys
 from functools import partial
 from StatisticPlots import Plots, SortByJson, SteamData, binary_search
 import json
+import main_en_pico_com
+import time
+import threading
 
 
 COL_BG = "#202228"
@@ -521,6 +524,10 @@ class Window:
         self.steamAPIThread.on_friend_list_change = self.on_fl_change
         self.steamAPIThread.on_steamid_status_change = self.on_player_change
 
+        self.pico_stop = False
+        self.pico_thread = threading.Thread(target=self.pico_loop)
+        self.pico_thread.start()
+
         self.image_thread = SteamAPI.AvatarLoadThread({})
 
         self.panel_start_x = 0
@@ -574,7 +581,26 @@ class Window:
         if self.lplayer_avatar is not None:
             self.lplayer_avatar.update_status(game, status)
 
+    def pico_loop(self):
+        while not self.pico_stop:
+            main_en_pico_com.pico_com()
+            time.sleep(10)
+
+        # Close connection to Pico
+        main_en_pico_com.serial_port_.close()
+        print("[INFO] Serial port closed. Bye.")
+
+
     def on_fl_change(self, changed_friends):
+        lst = []
+
+        for f in changed_friends:
+            lst.append([f.get_name(), f.get_status().name])
+
+        print(str(lst))
+
+        main_en_pico_com.lists = str(lst)
+
         self.update_drop_downs(changed_friends)
 
     def show_widgets(self):

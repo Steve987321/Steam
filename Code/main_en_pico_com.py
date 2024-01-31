@@ -10,7 +10,10 @@ def read_serial(port):
     return line.decode()
 
 
-def pico_com(lists):
+lists = "[['NAAM;GAME/STATUS'], []]"
+serial_port_ = None
+
+def pico_com():
     # First manually select the serial port that connects to the Pico
     serial_ports = list_ports.comports()
 
@@ -24,6 +27,7 @@ def pico_com(lists):
 
     # Open a connection to the Pico
     with serial.Serial(port=pico_port, baudrate=115200, bytesize=8, parity='N', stopbits=1, timeout=1) as serial_port:
+        serial_port_ = serial_port
         if serial_port.isOpen():
             print("[INFO] Using serial port", serial_port.name)
         else:
