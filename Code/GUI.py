@@ -145,7 +145,6 @@ class StatistiekWindow:
         zoekbutton = ctk.CTkButton(self.root, command=get_entry, text="Zoek")
         zoekbutton.grid(row=1, column=2)
 
-
     def steam_api_test(self):
         SteamAPI.test_steam_api()
         self.root.after(10000, self.steam_api_test)
