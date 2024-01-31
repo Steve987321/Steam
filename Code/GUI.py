@@ -116,7 +116,7 @@ class StatistiekWindow:
                                  text_color="green",
                                  text=f"Game info:"
                                       f"Average price: {SteamData.avg_price(data)}\n"
-                                 f"Average playtime: {SteamData.min_to_hours(SteamData.avg_playtime(data))}\n"
+                                 f"Average playtime in hours: {SteamData.min_to_hours(SteamData.avg_playtime(data))}\n"
                                  f"Average positive reviews: {SteamData.avg_positive(data)}\n"
                                  f"Most expensive game belongs to: {name} with a price of ${biggest}\n"
                                  f"There are {SteamData.amountOfGames(data)} games on steam")

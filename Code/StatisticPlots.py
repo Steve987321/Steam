@@ -279,7 +279,7 @@ class SteamData:
 def main(loaded_json):
     avg = SteamData.avg_playtime(loaded_json)
     biggest, name = SteamData.most_expensive_game(loaded_json)
-    print(f"\x1b[32mAverage price: {SteamData.avg_price(loaded_json)}")
+    print(f"\x1b[32m+-Average price: {SteamData.avg_price(loaded_json)}")
     print(f"Average playtime: {avg} minutes")
     print(f"Average playtime: {SteamData.min_to_hours(avg)} hours")
     print(f"Average positive reviews: {SteamData.avg_positive(loaded_json)}")
