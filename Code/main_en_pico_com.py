@@ -38,6 +38,7 @@ def pico_com():
             serial_port.write(data.encode())
             pico_output = read_serial(serial_port)
             pico_output = pico_output.replace('\r\n', ' ')
+            print(pico_output)
             # Exit user input loop
 
         except KeyboardInterrupt:
