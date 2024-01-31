@@ -1,6 +1,3 @@
-import time
-import tkinter
-
 import customtkinter as ctk
 import SteamAPI
 from PIL import Image
@@ -9,7 +6,6 @@ from functools import partial
 from StatisticPlots import Plots, SortByJson, SteamData, binary_search
 import json
 
-from dataclasses import dataclass
 
 COL_BG = "#202228"
 COL_HOVER = "#202227"
@@ -32,10 +28,20 @@ STYLE_CORNER_RADIUS = 2
 
 
 def lerp(a, b, t):
+    """Interpoleer tussen a en b op basis van t[0-1]
+
+    Returns:
+        Geïnterpoleerde waarde tussen a en b
+    """
     return a + (b - a) * t
 
 
 def clamp(v, min, max):
+    """Beperk v tussen min en max
+
+    Returns:
+        Ingeklemde waarde tussen min en max
+    """
     if v >= max:
         return max
     elif v <= min:
@@ -43,7 +49,12 @@ def clamp(v, min, max):
     return v
 
 
-def lerp_color(col1, col2, t):
+def lerp_color(col1: str, col2: str, t):
+    """Interpoleer tussen hex kleuren col1 en col2 op basis van t[0-1]
+
+    Returns:
+        Geïnterpoleerde hex kleur tussen col1 en col2
+    """
     # naar dec
     r1 = int(col1[1:3], 16)
     g1 = int(col1[3:5], 16)
@@ -149,12 +160,9 @@ class StatistiekWindow:
         zoekbutton = ctk.CTkButton(self.root, command=get_entry, text="Zoek")
         zoekbutton.grid(row=1, column=2)
 
-    def steam_api_test(self):
-        SteamAPI.test_steam_api()
-        self.root.after(10000, self.steam_api_test)
-
 
 class PlayerWidget:
+    """Player avatar en status frame"""
 
     instances = []
 
@@ -375,6 +383,8 @@ class PlayerWidget:
 
 
 class DropDownButton(ctk.CTkFrame):
+    """Steam dropdown frames"""
+
     dropdowns = []
     dropdowns_by_title = {}
 
@@ -485,6 +495,7 @@ class DropDownButton(ctk.CTkFrame):
 
 
 class SeparatorLine(ctk.CTkFrame):
+    """Een horizontale lijn, dat kan worden gebruikt als een separator"""
     def __init__(self, master: any, color: str, **kwargs):
         super().__init__(master, fg_color=color, height=1, **kwargs)
 
@@ -493,6 +504,7 @@ class SeparatorLine(ctk.CTkFrame):
 
 
 class SeparatorLineV(ctk.CTkFrame):
+    """Verticale versie van SeparatorLine"""
     def __init__(self, master: any, color: str, **kwargs):
         super().__init__(master, fg_color=color, width=6, **kwargs)
 
@@ -501,6 +513,7 @@ class SeparatorLineV(ctk.CTkFrame):
 
 
 class Window:
+    """Steam dashboard scherm"""
     def __init__(self, naam: str, win_width: int, win_height: int, steamid: str):
         self.steamid = steamid
 

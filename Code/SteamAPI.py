@@ -8,23 +8,6 @@ import threading
 from multiprocessing.pool import ThreadPool
 
 
-class PlayerStatus(IntEnum):
-    INVALID = -1  # Iets is foutgegegaan
-    OFFLINE = 0,  # speler is offline of heeft zijn profiel op private gezet
-    ONLINE = 1,  # speler is online
-    BUSY = 2,  # speler is busy
-    AWAY = 3,  # speler is afk en away
-    SNOOZE = 4,  # speler is afk
-    LOOKING_TO_TRADE = 5,  # speler wilt traden
-    LOOKING_TO_PLAY = 6  # speler wilt spelen
-
-
-class AvatarFormaat(IntEnum):
-    KLEIN = 0,      # 32x32
-    MIDDEL = 1,     # 64x64
-    GROOT = 2       # 184x184
-
-
 try:
     with open("STEAM_API_KEY.txt") as key:
         KEY = key.readline()
@@ -32,6 +15,25 @@ try:
             print("Er is geen API key gevonden in STEAM_API_KEY.txt")
 except FileNotFoundError:
     print("Er is geen STEAM_API_KEY.txt gevonden")
+
+
+class PlayerStatus(IntEnum):
+    """Status van een Steam profiel"""
+    INVALID = -1                # Iets is fout gegegaan
+    OFFLINE = 0,                # speler is offline of heeft zijn profiel op private gezet
+    ONLINE = 1,                 # speler is online
+    BUSY = 2,                   # speler is busy
+    AWAY = 3,                   # speler is afk en away
+    SNOOZE = 4,                 # speler is afk
+    LOOKING_TO_TRADE = 5,       # speler wilt traden
+    LOOKING_TO_PLAY = 6         # speler wilt spelen
+
+
+class AvatarFormaat(IntEnum):
+    """Grootte van steam profiel avatar"""
+    KLEIN = 0,      # 32x32
+    MIDDEL = 1,     # 64x64
+    GROOT = 2       # 184x184
 
 
 class GameInfo:
@@ -92,7 +94,9 @@ class GameInfo:
                 res.append(platform)
         return res
 
+
 class Api:
+    """Steam API calls"""
 
     processed_game_ids = {}
 
@@ -139,6 +143,7 @@ class Api:
 
     @staticmethod
     def get_player_games_data(steamid):
+        """Geeft alle games van een speler met info"""
         url = 'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/'
         base_url = "https://store.steampowered.com/api/appdetails/"
         game_data = {}
@@ -158,6 +163,12 @@ class Api:
             return
 
         def get_name(app_id: str, game_data):
+            """Thread job
+
+            Parameters:
+                app_id: id van de game/applicatie
+                game_data: dict waar opgehaalde data wordt opgeslagen
+            """
             if app_id in Api.processed_game_ids.keys():
                 game_data[app_id] = Api.processed_game_ids[app_id]
                 return
@@ -177,6 +188,7 @@ class Api:
 
             return
 
+        # een request voor elke game
         pool = ThreadPool()
         task_list_results = []
         for app_id in app_ids:
@@ -298,6 +310,7 @@ class Player:
 
 
 class AvatarLoadThread:
+    """Laad en 'cached' avatars van spelers"""
     def __init__(self, avatars: dict):
         self.avatars = avatars
         self.thread = None
@@ -326,6 +339,7 @@ class AvatarLoadThread:
 
 
 class SteamApiThread:
+    """Update en behoudt info over speler en vrienden"""
     def __init__(self, steam_id):
         self.has_data = False
         self.steam_id = steam_id
@@ -345,14 +359,17 @@ class SteamApiThread:
 
         self.prev_online_friends = set()
         self.processed_game_ids = set()
+
         self.thread = threading.Thread(target=self.update)
         self.thread.start()
 
     def stop_thread(self):
+        """Stop/Join update thread"""
         self.stop = True
         self.thread.join()
 
     def update(self):
+        """Update speler- en vriendenlijst info"""
         while not self.stop:
             self.player = Player(Api.get_player_summary(self.steam_id))
             self.friends = self.player.get_friends()
