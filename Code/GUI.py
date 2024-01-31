@@ -6,7 +6,7 @@ import SteamAPI
 from PIL import Image
 import sys
 from functools import partial
-from StatisticPlots import Plots, SortByJson
+from StatisticPlots import Plots, SortByJson, SteamData, binary_search
 import json
 
 from dataclasses import dataclass
@@ -75,9 +75,9 @@ class StatistiekWindow:
         self.data = loaded_json
         self.valid_keys = ["appid", "name", "release_date", "required_age", "achievements", "positive_ratings", "negative_ratings", "average_playtime", "owners", "price"]
 
-        help_label = ctk.CTkLabel(self.root, text=f"Kies uit de volgende opties: \n {self.valid_keys}")
-        self.in_key = ctk.CTkEntry(self.root)
-        self.btn_show_stats = ctk.CTkButton(self.root, text="Klaar", command=self.on_stats_show, hover_color=COL_BTN_HOVER, fg_color=COL_BTN, corner_radius=STYLE_CORNER_RADIUS)
+        help_label = ctk.CTkLabel(self.root, text=f"Kies uit één van de volgende opties:")
+        self.in_key = ctk.CTkComboBox(self.root, values=self.valid_keys)
+        self.btn_show_stats = ctk.CTkButton(self.root, text="Klaar", command=self.on_stats_show)
 
         help_label.pack(side=ctk.TOP, anchor=ctk.CENTER)
         self.in_key.pack(side=ctk.TOP, anchor=ctk.CENTER)
@@ -96,24 +96,58 @@ class StatistiekWindow:
         for child in self.root.winfo_children():
             child.destroy()
 
-        self.root.grid_columnconfigure([0, 1], weight=1)
-        self.root.grid_columnconfigure([0, 1], weight=1)
+        self.root.grid_rowconfigure([0, 1, 2, 3], weight=1)
+        self.root.grid_columnconfigure([0, 1, 2], weight=1)
 
-        lst = sorted(self.data, key=lambda x: x["positive_ratings"], reverse=True)
+        lst = sorted(self.data, key=lambda x: x[in_key], reverse=True)
 
-        SortByJson.filter_list(self.data, in_key)
+        sorted_search_data = SortByJson.filter_list(self.data, "name")
 
         names = []
         keys = []
         for i in lst[:5]:
             names.append(i["name"])
-            keys.append(i["positive_ratings"])
+            keys.append(i[in_key])
 
         Plots.figure1(self.root, names, keys)
         Plots.figure2(self.root, names, keys)
         # Plots.figure3(window, names, keys)
         Plots.figure4(self.data, self.root)
         Plots.figure5(self.data, self.root)
+
+        biggest, name = SteamData.most_expensive_game(sorted_search_data)
+        infolabel = ctk.CTkLabel(self.root,
+                                 text_color="green",
+                                 text=f"Game info:"
+                                      f"Average price: {SteamData.avg_price(sorted_search_data)}\n"
+                                 f"Average playtime in hours: {SteamData.min_to_hours(SteamData.avg_playtime(sorted_search_data))}\n"
+                                 f"Average positive reviews: {SteamData.avg_positive(sorted_search_data)}\n"
+                                 f"Most expensive game belongs to: {name} with a price of ${biggest}\n"
+                                 f"There are {SteamData.amountOfGames(sorted_search_data)} games on steam")
+        infolabel.grid(row=2, column=0)
+
+        zoekentry = ctk.CTkEntry(self.root, placeholder_text="Zoek naar games:")
+        zoekentry.grid(row=0, column=2)
+
+        zoeklabel = ctk.CTkLabel(self.root, text="")
+        zoeklabel.grid(row=2, column=2)
+
+        def get_entry():
+            game = zoekentry.get()
+
+            exists, index = binary_search(sorted_search_data, game, "name")
+
+            charstar = ""
+            for i, v in sorted_search_data[index].items():
+                charstar += f"{i}: {v}\n"
+
+            if exists:
+                zoeklabel.configure(text=charstar)
+            else:
+                zoeklabel.configure(text="Can't find game")
+
+        zoekbutton = ctk.CTkButton(self.root, command=get_entry, text="Zoek")
+        zoekbutton.grid(row=1, column=2)
 
     def steam_api_test(self):
         SteamAPI.test_steam_api()
@@ -528,7 +562,6 @@ class Window:
             self.lplayer_avatar.update_status(game, status)
 
     def on_fl_change(self, changed_friends):
-        print("on fl change, changed players:", len(changed_friends))
         self.update_drop_downs(changed_friends)
 
     def show_widgets(self):

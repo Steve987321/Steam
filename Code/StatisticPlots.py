@@ -10,6 +10,20 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 # plt.style.use("grayscale")  # Change style of plots
 
+def binary_search(lst, arg, key):
+    minIndex = 0
+    maxIndex = len(lst)
+    while maxIndex - minIndex > 1:
+        scooby = (maxIndex - minIndex) / 2
+        searchIndex = scooby + minIndex
+        if arg > lst[int(searchIndex)][key]:
+            minIndex += scooby  # take 2nd half
+        elif arg < lst[int(searchIndex)][key]:
+            maxIndex -= scooby  # take 1st half
+        else:
+            return True, int(searchIndex)
+    return False, -1
+
 
 def LinearRegression(data):  # https://towardsdatascience.com/linear-regression-using-gradient-descent-97a6c8700931
     # Read data
@@ -232,43 +246,45 @@ class Plots:
         canvas.draw()
 
 
-def avg_price(loaded_json):
-    avg = st.mean(list(i["price"] for i in loaded_json))
-    return round(avg, 2)
+class SteamData:
+    @staticmethod
+    def avg_price(loaded_json):
+        avg = st.mean(list(i["price"] for i in loaded_json))
+        return round(avg, 2)
 
+    @staticmethod
+    def avg_playtime(loaded_json):
+        avg = st.mean(list(i["average_playtime"] for i in loaded_json))
+        return round(avg)
 
-def avg_playtime(loaded_json):
-    avg = st.mean(list(i["average_playtime"] for i in loaded_json))
-    return round(avg)
+    @staticmethod
+    def min_to_hours(minutes):
+        return round(minutes / 60)
 
+    @staticmethod
+    def avg_positive(loaded_json):
+        avg = st.mean(list(i["positive_ratings"] for i in loaded_json))
+        return round(avg)
 
-def min_to_hours(minutes):
-    return round(minutes / 60)
+    @staticmethod
+    def most_expensive_game(loaded_json):
+        game = max(loaded_json, key=lambda a: a["price"])
+        return game["price"], game["name"]
 
-
-def avg_positive(loaded_json):
-    avg = st.mean(list(i["positive_ratings"] for i in loaded_json))
-    return round(avg)
-
-
-def most_expensive_game(loaded_json):
-    game = max(loaded_json, key=lambda a: a["price"])
-    return game["price"], game["name"]
-
-
-def amountOfGames(loaded_json):
-    return len(loaded_json)
+    @staticmethod
+    def amountOfGames(loaded_json):
+        return len(loaded_json)
 
 
 def main(loaded_json):
-    avg = avg_playtime(loaded_json)
-    biggest, name = most_expensive_game(loaded_json)
-    print(f"\x1b[32mAverage price: {avg_price(loaded_json)}")
+    avg = SteamData.avg_playtime(loaded_json)
+    biggest, name = SteamData.most_expensive_game(loaded_json)
+    print(f"\x1b[32m+-Average price: {SteamData.avg_price(loaded_json)}")
     print(f"Average playtime: {avg} minutes")
-    print(f"Average playtime: {min_to_hours(avg)} hours")
-    print(f"Average positive reviews: {avg_positive(loaded_json)}")
-    print(f"Most expensive game belongs to: \x1b[31m{name}\x1b[32m with a price of ${biggest}")
-    print(f"There are {amountOfGames(loaded_json)} games on steam")
+    print(f"Average playtime: {SteamData.min_to_hours(avg)} hours")
+    print(f"Average positive reviews: {SteamData.avg_positive(loaded_json)}")
+    print(f"Most expensive game belongs to: {name} with a price of ${biggest}")
+    print(f"There are {SteamData.amountOfGames(loaded_json)} games on steam")
 
 
 if __name__ == '__main__':
