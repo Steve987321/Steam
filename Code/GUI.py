@@ -6,7 +6,7 @@ import SteamAPI
 from PIL import Image
 import sys
 from functools import partial
-from StatisticPlots import Plots, SortByJson
+from StatisticPlots import Plots, SortByJson, SteamData
 import json
 
 from dataclasses import dataclass
@@ -70,9 +70,8 @@ class StatistiekWindow:
         self.data = loaded_json
         self.valid_keys = ["appid", "name", "release_date", "required_age", "achievements", "positive_ratings", "negative_ratings", "average_playtime", "owners", "price"]
 
-        help_label = ctk.CTkLabel(self.root, text=f"Kies uit de volgende opties: \n {self.valid_keys}")
+        help_label = ctk.CTkLabel(self.root, text=f"Kies uit één van de volgende opties:")
         self.in_key = ctk.CTkComboBox(self.root, values=self.valid_keys)
-        # self.in_key = ctk.CTkEntry(self.root)
         self.btn_show_stats = ctk.CTkButton(self.root, text="Klaar", command=self.on_stats_show)
 
         help_label.pack(side=ctk.TOP, anchor=ctk.CENTER)
@@ -92,12 +91,12 @@ class StatistiekWindow:
         for child in self.root.winfo_children():
             child.destroy()
 
-        self.root.grid_columnconfigure([0, 1], weight=1)
+        self.root.grid_rowconfigure([0, 1, 2], weight=1)
         self.root.grid_columnconfigure([0, 1], weight=1)
 
         lst = sorted(self.data, key=lambda x: x["positive_ratings"], reverse=True)
 
-        SortByJson.filter_list(self.data, in_key)
+        data = SortByJson.filter_list(self.data, in_key)
 
         names = []
         keys = []
@@ -110,6 +109,16 @@ class StatistiekWindow:
         # Plots.figure3(window, names, keys)
         Plots.figure4(self.data, self.root)
         Plots.figure5(self.data, self.root)
+
+        biggest, name = SteamData.most_expensive_game(data)
+        infolabel = ctk.CTkLabel(self.root,
+                                 text_color="green",
+                                 text=f"Average price: {SteamData.avg_price(data)}\n"
+                                 f"Average playtime: {SteamData.min_to_hours(SteamData.avg_playtime(data))}\n"
+                                 f"Average positive reviews: {SteamData.avg_positive(data)}\n"
+                                 f"Most expensive game belongs to: {name} with a price of ${biggest}\n"
+                                 f"There are {SteamData.amountOfGames(data)} games on steam")
+        infolabel.grid(row=2, column=0)
 
     def steam_api_test(self):
         SteamAPI.test_steam_api()
