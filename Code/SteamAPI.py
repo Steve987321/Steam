@@ -85,6 +85,8 @@ class GameInfo:
         if self.data["is_free"]:
             return "Free"
         else:
+            if "price_overview" not in self.data.keys():
+                return "-"
             return self.data["price_overview"]["final_formatted"]
 
     def get_supported_platforms(self) -> list[str]:
