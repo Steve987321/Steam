@@ -597,17 +597,17 @@ class Window:
 
         for f in changed_friends:
             if f.get_status() == SteamAPI.PlayerStatus.ONLINE:
-                if f.get_playing_game() is not "":
-                    lst_game.append([f.get_name(), f.get_playing_game()])
+                if f.get_playing_game() != "":
+                    lst_game.append(f"{f.get_name()};{f.get_playing_game()}")
                 else:
-                    lst_online.append([f.get_name(), f.get_playing_game()])
+                    lst_online.append(f.get_name())
             elif f.get_status() == SteamAPI.PlayerStatus.OFFLINE:
-                lst_offline.append([f.get_name(), f.get_playing_game()])
+                lst_offline.append(f.get_name())
 
         lst = [lst_online, lst_offline, lst_game]
         print(lst)
 
-        main_en_pico_com.lists = str(lst_str)
+        main_en_pico_com.lists = str(lst)
 
         self.update_drop_downs(changed_friends)
 
