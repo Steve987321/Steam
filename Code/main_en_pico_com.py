@@ -10,19 +10,6 @@ def read_serial(port):
     return line.decode()
 
 
-lists = "[['NAAM;GAME/STATUS'], []]"
-serial_port_ = None
-
-# First manually select the serial port that connects to the Pico
-serial_ports = list_ports.comports()
-
-print("[INFO] Serial ports found:")
-for i, port in enumerate(serial_ports):
-    print(str(i) + ". " + str(port.device))
-
-pico_port_index = int(input("Which port is the Raspberry Pi Pico connected to? "))
-pico_port = serial_ports[pico_port_index].device
-
 def pico_com():
     # Open a connection to the Pico
     with serial.Serial(port=pico_port, baudrate=115200, bytesize=8, parity='N', stopbits=1, timeout=1) as serial_port:
@@ -35,14 +22,31 @@ def pico_com():
 
         try:
             data = f"{lists}\r"
+            print(data)
             serial_port.write(data.encode())
             pico_output = read_serial(serial_port)
             pico_output = pico_output.replace('\r\n', ' ')
-            print(pico_output)
+            print(f"PICO output (test): {pico_output}")
             # Exit user input loop
 
         except KeyboardInterrupt:
             print("[INFO] Ctrl+C detected. Terminating.")
+
+#------------------------------------------
+lists = "[['echte', '*****'], ['*****'], ['*****']]"
+serial_port_ = None
+
+# First manually select the serial port that connects to the Pico
+serial_ports = list_ports.comports()
+
+print("[INFO] Serial ports found:")
+for i, port in enumerate(serial_ports):
+    print(str(i) + ". " + str(port.device))
+
+#pico_port_index = int(input("Which port is the Raspberry Pi Pico connected to? "))
+pico_port = serial_ports[0].device
+pico_com()
+
 
     # # Close connection to Pico
     # serial_port.close()
