@@ -2,14 +2,17 @@ from lcd1602 import LCD
 from machine import Pin
 import time
 import neopixel
+
+
 # 25-1-2024 yes
 
 
 def steam_uitlezer(st_lst_info, blink_not, cpy_of_lst):
-    if len(st_lst_info) > 0:  # Checkt voor nieuwe info
+    if len(st_lst_info) > 1:  # Checkt voor nieuwe info
         for item in st_lst_info:  # Zo ja:
             cpy_of_lst.append(item)  # Slaat het op in aparte lijsten om data_loss te voorkomen
             blink_not += 3  # Voegt 3 blinks toe per item
+        blink_not = blink_not - 3
     return blink_not, cpy_of_lst  # Return de nieuwe variabelen
 
 
@@ -65,7 +68,7 @@ def pico_main(st_online_lst, st_offline_lst, st_game_lst, online_lst_cpy, offlin
     while blink_not_online > 0 or blink_not_offline > 0 or blink_not_game > 0:
         np[0] = geel  # Maakt het eerste lampje geel om aan te tonen dat er nieuwe informatie beschikbaar is
         np.write()
-
+        print(online_lst_cpy)
         blink_not_online = blink_handler(blink_not_online, groen, np)
         blink_not_offline = blink_handler(blink_not_offline, rood, np)
         blink_not_game = blink_handler(blink_not_game, blauw, np)
@@ -82,22 +85,36 @@ def pico_main(st_online_lst, st_offline_lst, st_game_lst, online_lst_cpy, offlin
             while len(online_lst_cpy) > 0 or len(offline_lst_cpy) > 0 or len(game_lst_cpy) > 0:
                 if len(online_lst_cpy) > 0:
                     while len(online_lst_cpy) > 0:
-                        regel_1 = online_lst_cpy[0]
-                        regel_2 = "is Online!"
-                        lcd_writer(regel_1, regel_2, online_lst_cpy, lcd)
+                        if not online_lst_cpy[0] == '*****':
+                            regel_1 = online_lst_cpy[0]
+                            regel_2 = "is Online!"
+                            lcd_writer(regel_1, regel_2, online_lst_cpy, lcd)
+                        else:
+                            online_lst_cpy.pop(0)
                     online_lst_cpy = []
+                print(2)
                 if len(offline_lst_cpy) > 0:
                     while len(offline_lst_cpy) > 0:
-                        regel_1 = offline_lst_cpy[0]
-                        regel_2 = "is Offline!"
-                        lcd_writer(regel_1, regel_2, offline_lst_cpy, lcd)
+                        if not offline_lst_cpy[0] == '*****':
+                            regel_1 = offline_lst_cpy[0]
+                            regel_2 = "is Offline!"
+                            lcd_writer(regel_1, regel_2, offline_lst_cpy, lcd)
+                        else:
+                            offline_lst_cpy.pop(0)
                     offline_lst_cpy = []
                 if len(game_lst_cpy) > 0:
+                    print(game_lst_cpy)
                     for item in game_lst_cpy:
-                        naam, game = item.split(";")[0], item.split(";")[1]
-                        regel_1 = f"{naam} speelt:"
-                        regel_2 = f"{game}"
-                        lcd_writer(regel_1, regel_2, game_lst_cpy, lcd)
+                        print(item)
+                        if not item == '*****':
+                            naam, game = item.split(";")[0], item.split(";")[1]
+                            regel_1 = f"{naam} speelt:"
+                            regel_2 = f"{game}"
+                            lcd.write(0, 0, regel_1)  # Schrijft Regel 1 op het lcd-scherm over
+                            lcd.write(0, 1, regel_2)  # Schrijft Regel 2 op het lcd-scherm over
+                            time.sleep(1)
+                            lcd.clear()
+                            time.sleep(1)
                     game_lst_cpy = []
             time.sleep(0.5)
     if len(online_lst_cpy) == 0 and len(offline_lst_cpy) == 0 and len(game_lst_cpy) == 0:
@@ -113,8 +130,12 @@ spel = []
 while True:
     data = input()  # Wacht om input van de pico-com code
     raw = eval(data)  # Veranderd de string naar code, aka naar een list met 3 lists erin
-
     vriend_online__list = raw[0]
     vriend_offline_list = raw[1]
     vriend_speelt__list = raw[2]
+
+    vriend_online__list.append('*****')
+    vriend_offline_list.append('*****')
+    vriend_speelt__list.append('*****')
+
     pico_main(vriend_online__list, vriend_offline_list, vriend_speelt__list, online, offline, spel)
