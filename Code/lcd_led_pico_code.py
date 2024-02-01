@@ -134,8 +134,4 @@ while True:
     vriend_offline_list = raw[1]
     vriend_speelt__list = raw[2]
 
-    vriend_online__list.append('*****')
-    vriend_offline_list.append('*****')
-    vriend_speelt__list.append('*****')
-
     pico_main(vriend_online__list, vriend_offline_list, vriend_speelt__list, online, offline, spel)
