@@ -524,8 +524,9 @@ class Window:
         self.steamAPIThread.on_friend_list_change = self.on_fl_change
         self.steamAPIThread.on_steamid_status_change = self.on_player_change
 
+        self.lijst = "[['*****'], ['*****'], ['*****']]"
         self.pico_stop = False
-        self.pico_thread = threading.Thread(target=self.pico_loop)
+        self.pico_thread = threading.Thread(target=Window.pico_loop, args=(self,))
         self.pico_thread.start()
 
         self.image_thread = SteamAPI.AvatarLoadThread({})
@@ -581,19 +582,25 @@ class Window:
         if self.lplayer_avatar is not None:
             self.lplayer_avatar.update_status(game, status)
 
-    def pico_loop(self):
-        while not self.pico_stop:
-            main_en_pico_com.pico_com()
-            time.sleep(10)
+    @staticmethod
+    def pico_loop(window_instance):
+        while not window_instance.pico_stop:
+            print(window_instance.lijst)
+            main_en_pico_com.pico_com(window_instance)
+            time.sleep(5)
 
         # Close connection to Pico
         main_en_pico_com.serial_port_.close()
         print("[INFO] Serial port closed. Bye.")
 
+
     def on_fl_change(self, changed_friends):
         lst_online = []
         lst_offline = []
         lst_game = []
+        if len(changed_friends) > 6:
+            self.update_drop_downs(changed_friends)
+            return
 
         for f in changed_friends:
             if f.get_status() == SteamAPI.PlayerStatus.ONLINE:
@@ -604,10 +611,15 @@ class Window:
             elif f.get_status() == SteamAPI.PlayerStatus.OFFLINE:
                 lst_offline.append(f.get_name())
 
+        lst_online.append("*****")
+        lst_offline.append("*****")
+        lst_game.append("*****")
+
         lst = [lst_online, lst_offline, lst_game]
+
         print(lst)
 
-        main_en_pico_com.lists = str(lst)
+        self.lijst = str(lst)
 
         self.update_drop_downs(changed_friends)
 

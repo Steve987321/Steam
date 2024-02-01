@@ -373,6 +373,7 @@ class SteamApiThread:
     def update(self):
         """Update speler- en vriendenlijst info"""
         while not self.stop:
+            print("asbcef")
             self.player = Player(Api.get_player_summary(self.steam_id))
             self.friends = self.player.get_friends()
 

@@ -9,8 +9,7 @@ def read_serial(port):
     line = port.read(1000)
     return line.decode()
 
-
-def pico_com():
+def pico_com(window_instance):
     # Open a connection to the Pico
     with serial.Serial(port=pico_port, baudrate=115200, bytesize=8, parity='N', stopbits=1, timeout=1) as serial_port:
         serial_port_ = serial_port
@@ -21,19 +20,20 @@ def pico_com():
             serial_port.open()
 
         try:
-            data = f"{lists}\r"
-            print(data)
+            print(f"-------------------{window_instance.lijst}")
+            data = f"{window_instance.lijst}\r"
             serial_port.write(data.encode())
             pico_output = read_serial(serial_port)
             pico_output = pico_output.replace('\r\n', ' ')
             print(f"PICO output (test): {pico_output}")
             # Exit user input loop
+            window_instance.lijst = "[['*****'], ['*****'], ['*****']]"
 
         except KeyboardInterrupt:
             print("[INFO] Ctrl+C detected. Terminating.")
 
+
 #------------------------------------------
-lists = "[['echte', '*****'], ['*****'], ['*****']]"
 serial_port_ = None
 
 # First manually select the serial port that connects to the Pico
@@ -45,7 +45,7 @@ for i, port in enumerate(serial_ports):
 
 #pico_port_index = int(input("Which port is the Raspberry Pi Pico connected to? "))
 pico_port = serial_ports[0].device
-pico_com()
+# pico_com()
 
 
     # # Close connection to Pico
